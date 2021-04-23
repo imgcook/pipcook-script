@@ -88,7 +88,6 @@ async function constructModel(options: Record<string, any>, labelMap: any, tf: a
     console.log(`Epoch ${i}/${epochs} start`);
     for (let j = 0; j < batchesPerEpoch; j++) {
       const dataBatch = await dataset.train.nextBatch(batchSize);
-      console.log(dataBatch)
       // @ts-ignore
       const xs = tf.tidy(() => tf.stack(dataBatch.map((ele) => ele.data)));
       // @ts-ignore
