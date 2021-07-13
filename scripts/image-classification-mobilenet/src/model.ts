@@ -84,6 +84,7 @@ async function constructModel(options: Record<string, any>, labelMap: any, tf: a
   const { size } = await dataset.getDatasetMeta();
   const { train: trainSize } = size;
   const batchesPerEpoch = Math.floor(trainSize / batchSize);
+  const meta = await dataset.getDatasetMeta();
   for (let i = 0; i < epochs; i++) {
     console.log(`Epoch ${i}/${epochs} start`);
     await dataset.train.seek(0);
@@ -92,7 +93,7 @@ async function constructModel(options: Record<string, any>, labelMap: any, tf: a
       // @ts-ignore
       const xs = tf.tidy(() => tf.stack(dataBatch.map((ele) => ele.data)));
       // @ts-ignore
-      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(ele.label, 2))));
+      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(ele.label, meta.labelMap.length))));
       const trainRes = await model.trainOnBatch(xs, ys) as number[];
       if (j % Math.floor(batchesPerEpoch / 10) === 0) {
         console.log(`Iteration ${j}/${batchesPerEpoch} result --- loss: ${trainRes[0]} accuracy: ${trainRes[1]}`);

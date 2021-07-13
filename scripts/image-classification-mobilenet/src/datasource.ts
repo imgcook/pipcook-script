@@ -80,9 +80,9 @@ const imageClassDataCollect: DataSourceEntry<Datacook.Dataset.Types.Sample, Data
       categories.push(category);
     }
 
-    if (trainType == 'train') {
+    if (trainType === 'train') {
       train.push({ data: imagePath, label: categoryIndex});
-    } else if (trainType == 'test') {
+    } else if (trainType === 'test') {
       test.push({ data: imagePath, label: categoryIndex});
     }
   }
