@@ -1,7 +1,7 @@
-import { DataFlowEntry, ScriptContext } from '@pipcook/core';
+import { DataflowEntry, ScriptContext } from '@pipcook/core';
 import type * as Datacook from '@pipcook/datacook';
 
-const resizeEntry: DataFlowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> =
+const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> =
   async (dataset: Datacook.Dataset.Types.Dataset<Datacook.Dataset.Types.Sample, any>, options: Record<string, any>, context: ScriptContext)  => {
   const [ x = '-1', y = '-1' ] = options['size'];
   const { normalize = false } = options;

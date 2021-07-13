@@ -81,6 +81,7 @@ async function constructModel(options: Record<string, any>, labelMap: any, tf: a
     epochs = 10,
     batchSize = 16
   } = options;
+  await dataset.shuffle();
   const { size } = await dataset.getDatasetMeta();
   const { train: trainSize } = size;
   const batchesPerEpoch = Math.floor(trainSize / batchSize);

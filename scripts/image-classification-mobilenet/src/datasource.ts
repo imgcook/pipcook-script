@@ -3,7 +3,7 @@
  * the data is conform to expectation.
  */
 
-import { DataSourceEntry, ScriptContext } from '@pipcook/core';
+import { DatasourceEntry, ScriptContext } from '@pipcook/core';
 import type * as Datacook from '@pipcook/datacook';
 // @ts-ignore
 import download from 'pipcook-downloader';
@@ -28,7 +28,7 @@ import * as assert from 'assert';
  *
  * @param url path of the data, if it comes from local file, please add file:// as prefix
  */
-const imageClassDataCollect: DataSourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
+const imageClassDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
   const {
     url = ''
   } = options;
