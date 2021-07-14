@@ -37,8 +37,8 @@ async function main() {
 
   const optimizer = tf.train.adam(1e-3);
   while(true) {
+    //@ts-ignore
     await dataset.forEachAsync(async (e) => {
-      //@ts-ignore
       optimizer.minimize(() => {
         const images = e.xs
         const labels = e.ys;
@@ -47,7 +47,7 @@ async function main() {
         const cuross2 = loss[1](labels[1], outputs[1]);
         const allLoss = tf.sum(tf.stack(model.calculateLosses()));
         const currentLoss = tf.add(tf.add(cuross, cuross2), allLoss);
-        return currentLoss;
+        return tf.sum(currentLoss);
       })
     });
   }

@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs-node';
-import { booleanMask } from './utils';
+import { booleanMask, sparseCategoricalCrossentropy } from './utils';
 
 function _meshgrid(n_a: number, n_b: number) {
   const repeatTensor = [];
@@ -122,7 +122,7 @@ export function lossWrap (anchors: tf.Tensor, classes: number, ignore_thresh=0.5
 
     let obj_loss = tf.metrics.binaryCrossentropy(true_obj, pred_obj);
     obj_loss = tf.add(tf.mul(obj_mask, obj_loss), tf.mul(tf.mul(tf.sub(1, obj_mask), ignore_mask), obj_loss));
-    let class_loss = tf.mul(obj_mask, tf.metrics.categoricalCrossentropy(true_class_idx, pred_class));
+    let class_loss = tf.mul(obj_mask, sparseCategoricalCrossentropy(true_class_idx, pred_class));
     xy_loss = tf.sum(xy_loss, [1, 2, 3]);
     wh_loss = tf.sum(wh_loss, [1,2,3]);
     obj_loss = tf.sum(obj_loss, [1,2,3]);

@@ -74,3 +74,13 @@ export function sigmoidCrossEntropyWithLogits(
   return tf.add(tf.sub(maxOutput, outputXTarget), sigmoidOutput);
 }
 
+export function sparseCategoricalCrossentropy(
+  target: tf.Tensor, output: tf.Tensor): tf.Tensor {
+    const flatTarget = tf.floor(tf.reshape(target, [-1])).toInt() as tf.Tensor1D;
+    output = tf.clipByValue(output, tf.backend().epsilon(), 1 - tf.backend().epsilon());
+    const outputShape = output.shape;
+    const oneHotTarget =
+        tf.oneHot(flatTarget, outputShape[outputShape.length - 1])
+            .reshape(outputShape);
+    return tf.metrics.categoricalCrossentropy(oneHotTarget, output);
+}
