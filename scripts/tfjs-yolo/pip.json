@@ -1,0 +1,19 @@
+{
+  "specVersion": "2.0",
+  "datasource": "file://./build/datasource.js?url=file:///Users/caoruikun/Documents/work/pipcook/pipcook-script/test",
+  "dataflow": [
+    "file://./dataflow.js?size=416&size=416"
+  ],
+  "model": "file://./build/model.js",
+  "artifact": [{
+    "processor": "pipcook-artifact-zip@0.0.2",
+    "target": "/tmp/mobilenet-model.zip"
+  }],
+  "options": {
+    "framework": "mobilenet@1.0.0",
+    "train": {
+      "epochs": 10,
+      "validationRequired": true
+    }
+  }
+}

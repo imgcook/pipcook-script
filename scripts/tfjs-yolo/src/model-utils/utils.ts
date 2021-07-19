@@ -1,6 +1,8 @@
-import * as tf from '@tensorflow/tfjs-node';
+declare global {
+  var tf: any
+}
 
-function whereImpl(condShape: number[], condVals: tf.TypedArray): tf.Tensor2D {
+function whereImpl(condShape: number[], condVals: any) {
   const indices = [];
   for (let i = 0; i < condVals.length; i++) {
     if (condVals[i]) {
@@ -8,7 +10,7 @@ function whereImpl(condShape: number[], condVals: tf.TypedArray): tf.Tensor2D {
     }
   }
 
-  const inBuffer = tf.buffer(condShape, 'int32');
+  const inBuffer = global.tf.buffer(condShape, 'int32');
 
   const out = tf.buffer([indices.length, condShape.length], 'int32');
   for (let i = 0; i < indices.length; i++) {
@@ -16,18 +18,18 @@ function whereImpl(condShape: number[], condVals: tf.TypedArray): tf.Tensor2D {
     const offset = i * condShape.length;
     out.values.set(loc, offset);
   }
-  return out.toTensor() as tf.Tensor2D;
+  return out.toTensor();
 }
 
-function where(condition: tf.Tensor): tf.Tensor2D {
+function where(condition: any) {
   const vals = condition.dataSync();
   const res = whereImpl(condition.shape, vals);
   return res;
 }
 
 export function booleanMask(
-  tensor: tf.Tensor, mask: tf.Tensor,
-  axis?: number): tf.Tensor {
+  tensor: any, mask: any,
+  axis?: number): any {
   const $tensor = tensor;
   const $mask = mask;
 
@@ -64,7 +66,7 @@ export function booleanMask(
 }
 
 export function sigmoidCrossEntropyWithLogits(
-  labels: tf.Tensor, logits: tf.Tensor) {
+  labels: any, logits: any) {
   const $labels = labels;
   const $logits = logits;
   const maxOutput = tf.relu($logits);
@@ -75,12 +77,17 @@ export function sigmoidCrossEntropyWithLogits(
 }
 
 export function sparseCategoricalCrossentropy(
-  target: tf.Tensor, output: tf.Tensor): tf.Tensor {
-    const flatTarget = tf.floor(tf.reshape(target, [-1])).toInt() as tf.Tensor1D;
+  target: any, output: any): any {
+    const flatTarget = tf.floor(tf.reshape(target, [-1])).toInt();
     output = tf.clipByValue(output, tf.backend().epsilon(), 1 - tf.backend().epsilon());
     const outputShape = output.shape;
-    const oneHotTarget =
-        tf.oneHot(flatTarget, outputShape[outputShape.length - 1])
-            .reshape(outputShape);
+    let oneHotTarget;
+    if (outputShape[outputShape.length - 1] > 1) {
+      oneHotTarget =
+      tf.oneHot(flatTarget, outputShape[outputShape.length - 1])
+          .reshape(outputShape);
+    } else {
+      oneHotTarget = flatTarget.reshape(outputShape);
+    }
     return tf.metrics.categoricalCrossentropy(oneHotTarget, output);
 }
