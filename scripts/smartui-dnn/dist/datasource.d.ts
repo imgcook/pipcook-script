@@ -4,6 +4,6 @@
  */
 import { DatasourceEntry } from '@pipcook/core';
 import * as Datacook from '@pipcook/datacook';
-declare const imageClassDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.TableDatasetMeta>;
-export default imageClassDataCollect;
+declare const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.TableDatasetMeta>;
+export default OdpsDataCollect;
 //# sourceMappingURL=datasource.d.ts.map

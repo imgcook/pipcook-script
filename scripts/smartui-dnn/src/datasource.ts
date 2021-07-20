@@ -120,7 +120,7 @@ class DatasetImpl<T extends Datacook.Dataset.Types.Sample, D extends Datacook.Da
   }
 }
 
-const imageClassDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.TableDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
+const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.TableDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
   let {
     accessId,
     accessKey,
@@ -157,5 +157,4 @@ const imageClassDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Data
   return new DatasetImpl(data, schema, new DataAccessorImpl(table, client, boa, schema, data, label));
 };
  
-export default imageClassDataCollect;
- 
+export default OdpsDataCollect;
