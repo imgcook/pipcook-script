@@ -1,7 +1,7 @@
 {
   "name": "@pipcook/plugins-tfjs-yolo",
-  "version": "0.0.15",
-  "description": "js version of odps sdk",
+  "version": "0.0.1",
+  "description": "script for pipcook tfjs yolo model",
   "main": "dist/index.js",
   "files": [
     "dist"
