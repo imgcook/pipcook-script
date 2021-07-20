@@ -1,7 +1,7 @@
 {
   "name": "@pipcook/plugins-smartui-logic-regression",
   "version": "0.0.15",
-  "description": "js version of odps sdk",
+  "description": "pipcook script to do the logic regression for smart ui jobs",
   "main": "dist/index.js",
   "files": [
     "dist"
