@@ -1,1 +1,0 @@
-{"version":3,"file":"datasource.d.ts","sourceRoot":"","sources":["../src/datasource.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAEF,OAAO,EAAE,eAAe,EAAiB,MAAM,eAAe,CAAC;AAC/D,OAAO,KAAK,QAAQ,MAAM,mBAAmB,CAAC;AAoH/C,QAAA,MAAM,eAAe,EAAE,eAAe,CAAC,QAAQ,CAAC,OAAO,CAAC,KAAK,CAAC,MAAM,EAAE,QAAQ,CAAC,OAAO,CAAC,KAAK,CAAC,gBAAgB,CAmC5G,CAAC;AAEF,eAAe,eAAe,CAAC"}
