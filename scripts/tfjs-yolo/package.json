@@ -1,5 +1,5 @@
 {
-  "name": "@ali/alias-odps",
+  "name": "@pipcook/plugins-tfjs-yolo",
   "version": "0.0.15",
   "description": "js version of odps sdk",
   "main": "dist/index.js",

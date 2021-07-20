@@ -20,7 +20,7 @@ function process(data: Datacook.Dataset.Types.Coco.Meta, curPath: string) {
   })
 }
 
- const objectDetectionDataSource: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
+const objectDetectionDataSource: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
    const {
      url = ''
    } = options;
@@ -88,7 +88,7 @@ function process(data: Datacook.Dataset.Types.Coco.Meta, curPath: string) {
    });
 
    return dataset as any;
- };
+};
  
- export default objectDetectionDataSource;
+export default objectDetectionDataSource;
  
