@@ -69,7 +69,7 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = a
   ]
 
   model.compile({
-    optimizer: tf.train.adam(1e-3),
+    optimizer: tf.train.rmsprop(1e-3),
     loss: loss
   });
 
@@ -87,7 +87,7 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = a
         return ys;
       });
       const yss = (await transformTargets(ys, getConstants().yolo_tiny_anchors, 416));
-      const res = await model.trainOnBatch();
+      const res = await model.trainOnBatch(xs, yss);
       if (j % (Math.floor(batchesPerEpoch / 10)) === 0) {
         console.log(`epoch ${i} - iteration ${j}: total loss is ${res[0]}`);
       }

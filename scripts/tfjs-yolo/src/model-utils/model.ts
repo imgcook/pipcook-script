@@ -30,7 +30,11 @@ function DarknetConv2D_BN_Leaky(input: any, filters: number, kernelSize: number[
     kernelRegularizer: tf.regularizers.l2({
       l2: 5e-4
     }),
-    padding: 'same'
+    kernelInitializer: 'glorotUniform',
+    padding: 'same',
+    biasInitializer: 'zeros',
+    dilationRate: [1, 1],
+    strides: 1
   }).apply(input);
   temp = tf.layers.batchNormalization().apply(temp);
   temp = tf.layers.leakyReLU({
@@ -46,7 +50,11 @@ function DarknetConv2D(input: any, filters: number, kernelSize: number[]) {
     kernelRegularizer: tf.regularizers.l2({
       l2: 5e-4
     }),
-    padding: 'same'
+    kernelInitializer: 'glorotUniform',
+    padding: 'same',
+    biasInitializer: 'zeros',
+    dilationRate: [1, 1],
+    strides: 1
   }).apply(input);
   return temp;
 }
@@ -55,7 +63,8 @@ function maxPooling2d(input: any, poolSize: [number, number], strides: [number, 
   const temp = tf.layers.maxPooling2d({
     poolSize,
     strides,
-    padding: 'same'
+    padding: 'same',
+    dataFormat: 'channelsLast'
   }).apply(input);
   return temp;
 }
