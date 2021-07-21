@@ -116,7 +116,7 @@ class DatasetImpl<T extends Datacook.Dataset.Types.Sample, D extends Datacook.Da
   }
 
   shuffle() {
-    console.log('shuffle is not implemented in table reader');
+    console.warn('shuffle is not implemented in table reader');
   }
 }
 
