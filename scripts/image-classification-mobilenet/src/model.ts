@@ -1,7 +1,6 @@
 import { ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
 import type { Dataset } from '@pipcook/datacook';
 
-const MOBILENET_MODEL_PATH = 'http://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/mobilenet/web_model/model.json';
 function argMax(array: any) {
   return [].map.call(array, (x: any, i: any) => [ x, i ]).reduce((r: any, a: any) => (a[0] > r[0] ? a : r))[1];
 }
@@ -21,6 +20,7 @@ async function constructModel(options: Record<string, any>, labelMap: any, tf: a
     loss = 'categoricalCrossentropy',
     metrics = [ 'accuracy' ],
     hiddenLayerUnits = 10,
+    modelUrl = 'http://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/mobilenet/web_model/model.json'
   } = options;
   const NUM_CLASSES = labelMap.length;
   // @ts-ignore
@@ -28,7 +28,7 @@ async function constructModel(options: Record<string, any>, labelMap: any, tf: a
   // @ts-ignore
   const localModel = tf.sequential();
   // @ts-ignore
-  const mobilenet = await tf.loadLayersModel(MOBILENET_MODEL_PATH);
+  const mobilenet = await tf.loadLayersModel(modelUrl);
   const layer = mobilenet.getLayer('conv_pw_13_relu');
   // @ts-ignore
   const truncatedMobilenet = tf.model({
