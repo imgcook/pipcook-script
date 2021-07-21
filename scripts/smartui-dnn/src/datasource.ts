@@ -122,8 +122,6 @@ class DatasetImpl<T extends Datacook.Dataset.Types.Sample, D extends Datacook.Da
 
 const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.TableDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
   let {
-    accessId,
-    accessKey,
     project,
     table,
     endpoint = 'http://service-corp.odps.aliyun-inc.com/api',
@@ -131,13 +129,18 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
     label
   } = options;
 
+  const {
+    odpssource_accessId,
+    odpssource_accessKey
+  } = process.env;
+
   data = data.split(',');
 
   const { boa } = context;
   const ODPS = boa.import('odps').ODPS;
   const { len } = boa.builtins();
 
-  const client = ODPS(accessId, accessKey, project, endpoint);
+  const client = ODPS(odpssource_accessId, odpssource_accessKey, project, endpoint);
   const tableClient = client.get_table(table);
 
   // get table schema
