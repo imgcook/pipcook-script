@@ -8,24 +8,21 @@ function getAnchors() {
   return tf.tensor([[10,14], [23,27], [37,58], [81,82], [135,169], [344,319]], [6,2], 'float32');
 }
 
-function transformBBox(bboxes: number[][][], width: number, height: number, labelIds: number[][]) {
-  const res = bboxes.map((bbox, index) => {
-    bbox.forEach((box, index2) => {
-      box[2] = box[0] + box[2];
-      box[3] = box[1] + box[3];
-      box[0] = box[0] / width;
-      box[1] = box[1] / height;
-      box[2] = box[2] / width;
-      box[3] = box[3] / height;
-      box[4] = labelIds[index][index2];
-    });
-    bbox = bbox.slice(0, 8);
-    if (bbox.length < 8) {
-      bbox = bbox.concat(new Array(8 - bbox.length).fill([0,0,0,0,0]));
-    }
-    return bbox;
-  })
-  return res;
+function transformBBox(bboxes: number[][], width: number, height: number, labelIds: number[]) {
+  bboxes.forEach((box, index2) => {
+    box[2] = box[0] + box[2];
+    box[3] = box[1] + box[3];
+    box[0] = box[0] / width;
+    box[1] = box[1] / height;
+    box[2] = box[2] / width;
+    box[3] = box[3] / height;
+    box[4] = labelIds[index2];
+  });
+  bboxes = bboxes.slice(0, 8);
+  if (bboxes.length < 8) {
+    bboxes = bboxes.concat(new Array(8 - bboxes.length).fill([0,0,0,0,0]));
+  }
+  return bboxes;
 }
 
 
@@ -40,7 +37,7 @@ function createTinyModel(inputShape: number[],  anchors: any, numClasses: number
 const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = async (api: Runtime<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
   const { modelDir } = context.workspace;
   const {
-    epochs = 10,
+    epochs = 20,
     batchSize = 16
   } = options;
   let tf: any;
@@ -73,26 +70,46 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = a
     loss: loss
   });
 
-  for (let i = 0; i < epochs; i++) {
-    console.log(`Epoch ${i}/${epochs} start`);
-    await dataset.train.seek(0);
-    for (let j = 0; j < batchesPerEpoch; j++) {
-      const dataBatch = await dataset.train.nextBatch(batchSize);
-      const xs = tf.tidy(() => tf.stack(dataBatch.map((ele) => ele.data)));
-      const ys = tf.tidy(() => {
-        let bboxes: number[][][] = dataBatch.map(ele => ele.label.map((ele2: any) => ele2.bbox));
-        const labels: number[][] = dataBatch.map(ele => ele.label.map((ele2: any) => Number(ele2.category_id) - 1));
+  function makeIterator() {
+    const iterator = {
+      next: async () => {
+        let data = await dataset.train.next();
+        if (!data) {
+          await dataset.train.seek(0);
+          data = await dataset.train.next();
+        }
+        let bboxes: number[][] = data?.label.map((ele2: any) => ele2.bbox);
+        bboxes = JSON.parse(JSON.stringify(bboxes));
+        const labels: number[] = data?.label.map((ele2: any) =>Number(ele2.category_id) - 1 );
         bboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
         const ys = tf.tensor(bboxes);
-        return ys;
-      });
-      const yss = (await transformTargets(ys, getConstants().yolo_tiny_anchors, 416));
-      const res = await model.trainOnBatch(xs, yss);
-      if (j % (Math.floor(batchesPerEpoch / 10)) === 0) {
-        console.log(`epoch ${i} - iteration ${j}: total loss is ${res[0]}`);
+        return {
+          value: {
+            xs: data?.data,
+            ys
+          },
+          done: false
+        }
       }
-    }
+    };
+    return iterator;
   }
+  let ds = tf.data.generator(makeIterator).batch(batchSize).mapAsync(async (data: any) => {
+    const ys = await transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416);
+    return {
+      xs: data.xs,
+      ys
+    }
+  });
+
+  await model.fitDataset(ds, {
+    batchesPerEpoch,
+    epochs: epochs,
+    callbacks: [
+      tf.callbacks.earlyStopping({monitor: 'loss', patience: 3, verbose: 1}),
+      tf.node.tensorBoard(`${modelDir}/tensorboard`)
+    ]
+  })
   await model.save(`file://${modelDir}`);
 }
 

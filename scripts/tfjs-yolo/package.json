@@ -28,9 +28,8 @@
     "typescript": "^4.1.2"
   },
   "dependencies": {
-    "@pipcook/core": "^2.0.0-rc.3",
-    "@pipcook/datacook": "0.0.7",
-    "@tensorflow/tfjs": "^3.8.0",
+    "@pipcook/core": "^2.0.0-rc.5",
+    "@pipcook/datacook": "0.0.8",
     "@types/fs-extra": "^9.0.7",
     "@types/jasmine": "^3.5.7",
     "fs-extra": "^8.1.0",
@@ -38,7 +37,6 @@
     "nyc": "14.1.1",
     "pipcook-downloader": "^8.0.0",
     "ts-loader": "^9.0.2",
-    "typescript": "^4.2.4",
     "webpack": "^5.24.3",
     "webpack-cli": "^4.5.0",
     "webpack-node-externals": "^2.5.2"
