@@ -147,9 +147,9 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
   for (let i = 0; i < len(columns); i++) {
     const column = columns[i];
     schema.push({
-    name: column.name,
-    type: column.type
-  })
+      name: column.name,
+      type: column.type
+    })
   }
   if (data[0] === '*') {
     data = schema.map(ele => ele.name).filter(ele => ele !== label);
