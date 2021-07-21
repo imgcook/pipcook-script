@@ -31,14 +31,14 @@
     "webpack-cli": "^4.5.0",
     "webpack-node-externals": "^2.5.2",
     "@types/fs-extra": "^9.0.7",
-    "@types/jasmine": "^3.5.7"
+    "@types/jasmine": "^3.5.7",
+    "nyc": "14.1.1"
   },
   "dependencies": {
     "@pipcook/core": "^2.0.0-rc.5",
     "@pipcook/datacook": "^0.0.8",
     "fs-extra": "^8.1.0",
     "glob-promise": "^4.1.0",
-    "nyc": "14.1.1",
     "pipcook-downloader": "^8.0.0"
   },
   "publishConfig": {
