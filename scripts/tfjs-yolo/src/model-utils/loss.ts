@@ -1,4 +1,4 @@
-import { booleanMask, sparseCategoricalCrossentropy } from './utils';
+import { booleanMask, broadcastTo, sparseCategoricalCrossentropy } from './utils';
 declare global {
   var tf: any
 }
@@ -68,8 +68,8 @@ function broadcast_iou(box_1: any, box_2: any) {
     if (originShapeFirst == 0) {
       return tf.tensor([], new_shape.slice(0, new_shape.length - 1));
     }
-    box_1 = tf.broadcastTo(box_1, new_shape);
-    box_2 = tf.broadcastTo(box_2, new_shape);
+    box_1 = broadcastTo(box_1, new_shape);
+    box_2 = broadcastTo(box_2, new_shape);
 
     const int_w = tf.maximum(tf.sub(tf.minimum(getLastIndex(box_1, 2), getLastIndex(box_2, 2)), tf.maximum(getLastIndex(box_1, 0), getLastIndex(box_2, 0))), 0);
     const int_h = tf.maximum(tf.sub(tf.minimum(getLastIndex(box_1, 3), getLastIndex(box_2, 3)), tf.maximum(getLastIndex(box_1, 1), getLastIndex(box_2, 1))), 0);
