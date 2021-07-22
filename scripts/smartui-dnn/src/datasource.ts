@@ -156,6 +156,10 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
   }
   if (data[0] === '*') {
     data = schema.map(ele => ele.name).filter(ele => ele !== label);
+  } else if (data[0].startsWith('*-')) {
+    data[0] = data[0].replace('*-', '');
+    const features = schema.map(ele => ele.name).filter(ele => ele !== label && (!data.includes(ele)));
+    data = features;
   }
   return new DatasetImpl(data, schema, new DataAccessorImpl(table, client, boa, schema, data, label));
 };

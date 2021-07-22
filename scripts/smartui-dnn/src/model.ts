@@ -60,9 +60,10 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.TableDatasetMeta> = a
       const xs = tf.tidy(() => tf.stack(batch.map((ele) => ele.data)));
       const ys = tf.tidy(() => tf.stack(batch.map((ele) => ele.label)));
       const res = await model.trainOnBatch(xs, ys);
-      if (j % 10 === 0) {
+      if (j % 100 === 0) {
         console.log(`Epoch ${i} - Iteration ${j} : loss is ${res[0]} and accuracy is ${res[1]}`);
       }
+      j = j + 1;
     }
   }
 
