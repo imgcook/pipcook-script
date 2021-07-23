@@ -124,7 +124,7 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
   let {
     project,
     table,
-    endpoint = 'http://service-corp.odps.aliyun-inc.com/api',
+    endpoint,
     data,
     label
   } = options;
