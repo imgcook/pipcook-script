@@ -28,9 +28,18 @@ class DataAccessorImpl<T extends Datacook.Dataset.Types.Sample> implements Datac
   client: any;
   data: string[];
   label: string;
+  pt?: string;
 
-  constructor(table: string, client: any, boa: any, schema: Datacook.Dataset.Types.TableSchema, data: string[], label: string) {
-    const reader = client.read_table(table);
+  constructor(table: string, client: any, boa: any, schema: Datacook.Dataset.Types.TableSchema, data: string[], label: string, pt?: string) {
+    let reader;
+    if (pt) {
+      reader = client.read_table(table, boa.kwargs({
+        partition: pt
+      }));
+    } else {
+      reader = client.read_table(table);
+    }
+    this.pt = pt;
     this.table = table;
     this.client = client;
     this.reader = reader;
@@ -81,7 +90,14 @@ class DataAccessorImpl<T extends Datacook.Dataset.Types.Sample> implements Datac
   }
   async seek(offset: number): Promise<void> {
     if (offset === 0) {
-      const reader = this.client.read_table(this.table);
+      let reader;
+      if (this.pt) {
+        reader = this.client.read_table(this.table, this.boa.kwargs({
+          partition: this.pt
+        }));
+      } else {
+        reader = this.client.read_table(this.table);
+      }
       this.reader = reader;
     }
   }
@@ -124,9 +140,10 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
   let {
     project,
     table,
-    endpoint = 'http://service-corp.odps.aliyun-inc.com/api',
+    endpoint,
     data,
-    label
+    label,
+    pt
   } = options;
 
   const {
@@ -161,7 +178,7 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
     const features = schema.map(ele => ele.name).filter(ele => ele !== label && (!data.includes(ele)));
     data = features;
   }
-  return new DatasetImpl(data, schema, new DataAccessorImpl(table, client, boa, schema, data, label));
+  return new DatasetImpl(data, schema, new DataAccessorImpl(table, client, boa, schema, data, label, pt));
 };
  
 export default OdpsDataCollect;
