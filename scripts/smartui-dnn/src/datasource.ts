@@ -6,13 +6,17 @@
  import { DatasourceEntry, ScriptContext } from '@pipcook/core';
  import * as Datacook from '@pipcook/datacook';
 
-function transformRecord(record: any, schemas: Datacook.Dataset.Types.TableSchema, data: string[], label: string) {
+function transformRecord(record: any, schemas: Datacook.Dataset.Types.TableSchema, data: string[], label: string, uiStrategyReverse: any) {
   const obj: any = {
     data: []
   };
   for (const schema of schemas) {
     if (data.includes(schema.name)) {
-      obj.data.push(parseFloat(record[schema.name] || '0'))
+      if (schema.name === 'item__ui_strategy') {
+        obj.data.push(uiStrategyReverse[record[schema.name]] || -1);
+      } else {
+        obj.data.push(parseFloat(record[schema.name] || '0'))
+      }
     } else if (label === schema.name) {
       obj.label = record[schema.name];
     }
@@ -29,8 +33,9 @@ class DataAccessorImpl<T extends Datacook.Dataset.Types.Sample> implements Datac
   data: string[];
   label: string;
   pt?: string;
+  uiStrategyReverse: any;
 
-  constructor(table: string, client: any, boa: any, schema: Datacook.Dataset.Types.TableSchema, data: string[], label: string, pt?: string) {
+  constructor(table: string, client: any, boa: any, schema: Datacook.Dataset.Types.TableSchema, data: string[], label: string, uiStrategyReverse: any, pt?: string) {
     let reader;
     if (pt) {
       reader = client.read_table(table, boa.kwargs({
@@ -47,6 +52,7 @@ class DataAccessorImpl<T extends Datacook.Dataset.Types.Sample> implements Datac
     this.schema = schema;
     this.data = data;
     this.label = label;
+    this.uiStrategyReverse = uiStrategyReverse;
   }
 
   shuffle(): void {
@@ -55,7 +61,7 @@ class DataAccessorImpl<T extends Datacook.Dataset.Types.Sample> implements Datac
   async next(): Promise<T | null> {
     const { next } = this.boa.builtins();
     const record = next(this.reader, null);
-    return record && transformRecord(record, this.schema, this.data, this.label);
+    return record && transformRecord(record, this.schema, this.data, this.label, this.uiStrategyReverse);
   }
 
   async nextBatch(batchSize: number): Promise<Array<T>> {
@@ -109,12 +115,14 @@ class DatasetImpl<T extends Datacook.Dataset.Types.Sample, D extends Datacook.Da
   schema: Datacook.Dataset.Types.TableSchema = [];
   train: DataAccessorImpl<T>;
   test: DataAccessorImpl<T>;
-  
-  constructor(data: string[], schema: Datacook.Dataset.Types.TableSchema, train: DataAccessorImpl<T>) {
+  uiStrategy: Record<number, any>;
+
+  constructor(data: string[], schema: Datacook.Dataset.Types.TableSchema, train: DataAccessorImpl<T>, uiStrategy: Record<number, any>) {
     this.dataKeys = data;
     this.schema = schema;
     this.train = train;
     this.test = train;
+    this.uiStrategy = uiStrategy;
   }
 
   //@ts-ignore
@@ -127,6 +135,7 @@ class DatasetImpl<T extends Datacook.Dataset.Types.Sample, D extends Datacook.Da
         train: -1,
         test: -1
       },
+      uiStrategy: this.uiStrategy,
       labelMap: {}
     }
   }
@@ -143,8 +152,26 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
     endpoint,
     data,
     label,
-    pt
+    pt,
+    uiStrategy
   } = options;
+
+  uiStrategy = JSON.parse(uiStrategy);
+
+  let labelMap: Record<number, any> = {};
+  uiStrategy.forEach((ui: any, index: number) => {
+    let keys = Object.keys(ui);
+    keys = keys.sort();
+    const values = keys.map(ele => ele + '^' + ui[ele]);
+    labelMap[index] = values.join('|');
+  });
+
+  uiStrategy = labelMap;
+
+  const uiStrategyReverse = Object.keys(uiStrategy).reduce((ret: any, key) => {
+    ret[uiStrategy[parseInt(key, 10)]] = parseInt(key, 10);
+    return ret;
+  }, {});
 
   const {
     odpssource_accessId,
@@ -162,8 +189,8 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
 
   // get table schema
   const schema: Datacook.Dataset.Types.TableSchema = [];
-
   const columns = tableClient.schema.columns;
+
   for (let i = 0; i < len(columns); i++) {
     const column = columns[i];
     schema.push({
@@ -178,7 +205,7 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
     const features = schema.map(ele => ele.name).filter(ele => ele !== label && (!data.includes(ele)));
     data = features;
   }
-  return new DatasetImpl(data, schema, new DataAccessorImpl(table, client, boa, schema, data, label, pt));
+  return new DatasetImpl(data, schema, new DataAccessorImpl(table, client, boa, schema, data, label, uiStrategyReverse, pt), uiStrategy);
 };
  
 export default OdpsDataCollect;

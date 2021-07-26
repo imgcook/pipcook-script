@@ -36,6 +36,8 @@
   "dependencies": {
     "@pipcook/core": "^2.0.0-rc.3",
     "@pipcook/datacook": "^0.0.8",
+    "@types/fs-extra": "^9.0.12",
+    "fs-extra": "^10.0.0",
     "glob-promise": "^4.1.0"
   },
   "publishConfig": {

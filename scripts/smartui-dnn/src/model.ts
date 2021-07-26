@@ -1,5 +1,6 @@
 import { ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
 import type { Dataset } from '@pipcook/datacook';
+import * as fs from 'fs-extra';
 
 function createModel(featureNumbers: number, tf: any) {
   const model = tf.sequential();
@@ -38,6 +39,8 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.TableDatasetMeta> = a
     tf = await context.importJS('@tensorflow/tfjs-node');
   }
   const meta = await api.dataset.getDatasetMeta();
+  //@ts-ignore
+  const uiStrategy = meta.uiStrategy;
   const featureNumbers = meta?.dataKeys?.length as number;
   const model = createModel(featureNumbers, tf);
 
@@ -68,6 +71,7 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.TableDatasetMeta> = a
   }
 
   await model.save(`file://${modelDir}`);
+  await fs.writeFile(`${modelDir}/uiStrategy.json`, JSON.stringify(uiStrategy));
 }
 
 export default main;
