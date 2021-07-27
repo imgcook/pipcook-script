@@ -155,7 +155,6 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
     pt,
     uiStrategy
   } = options;
-
   uiStrategy = JSON.parse(uiStrategy);
 
   let labelMap: Record<number, any> = {};
