@@ -16,7 +16,6 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
       const originHeight = originImage.height;
       const ratioX = parsedX / originWidth;
       const ratioY = parsedY / originHeight;
-      const resized = originImage.resize(parsedX, parsedY);
       const labels = JSON.parse(JSON.stringify(sample.label));
       for (const curLabel of labels) {
         curLabel.bbox = [
@@ -27,7 +26,7 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
         ]
       }
       return {
-        data: resized.toTensor(),
+        data: originImage.toTensor(),
         label: labels,
       }
     },

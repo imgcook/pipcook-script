@@ -25,7 +25,6 @@ function transformBBox(bboxes: number[][], width: number, height: number, labelI
   return bboxes;
 }
 
-
 function createTinyModel(inputShape: number[],  anchors: any, numClasses: number, freezeBody: boolean) {
   const imageInput = tf.input({
     shape: [inputShape[0], inputShape[1], 3]
@@ -80,12 +79,12 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = a
         }
         let bboxes: number[][] = data?.label.map((ele2: any) => ele2.bbox);
         bboxes = JSON.parse(JSON.stringify(bboxes));
-        const labels: number[] = data?.label.map((ele2: any) =>Number(ele2.category_id) - 1 );
+        const labels: number[] = data?.label.map((ele2: any) => Number(ele2.category_id) - 1 );
         bboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
         const ys = tf.tensor(bboxes);
         return {
           value: {
-            xs: data?.data,
+            xs: tf.tidy(() => tf.div(tf.image.resizeBilinear(data?.data, [416, 416]), 255)),
             ys
           },
           done: false
