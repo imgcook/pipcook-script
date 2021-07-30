@@ -5,6 +5,11 @@ function argMax(array: any) {
   return [].map.call(array, (x: any, i: any) => [ x, i ]).reduce((r: any, a: any) => (a[0] > r[0] ? a : r))[1];
 }
 
+const defaultWeightsMap: {[key: string]: string} = {
+  'resnet': 'https://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/resnet50_tfjs/model.json',
+  'mobilenet': 'http://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/mobilenet/web_model/model.json'
+}
+
 /**
  * this is the plugin used to load a mobilenet model or load existing model.
  * @param optimizer (string | tf.train.Optimizer)[optional / default = tf.train.adam()] the optimizer of model
@@ -13,37 +18,40 @@ function argMax(array: any) {
  * @param metrics (string | LossOrMetricFn | Array | {[outputName: string]: string | LossOrMetricFn}): [optional / default = ['accuracy']]
  * @param hiddenLayerUnits (number): [optional / default = 10]
 */
-async function constructModel(options: Record<string, any>, labelMap: any, tf: any){
+async function constructModel(options: Record<string, any>, meta: Dataset.Types.ImageDatasetMeta , tf: any){
   let {
     // @ts-ignore
     optimizer = tf.train.adam(),
     loss = 'categoricalCrossentropy',
     metrics = [ 'accuracy' ],
     hiddenLayerUnits = 10,
-    modelUrl = 'http://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/mobilenet/web_model/model.json'
+    modelUrl = 'mobilenet',
+    freeze = true
   } = options;
-  const NUM_CLASSES = labelMap.length;
+  modelUrl = defaultWeightsMap[modelUrl] || modelUrl;
+  const labelMap = meta.labelMap;
+  const inputShape = meta.dimension;
+  const NUM_CLASSES = Object.keys(labelMap).length;
   // @ts-ignore
   let model: tf.LayersModel | null = null;
   // @ts-ignore
   const localModel = tf.sequential();
+  localModel.add(
+    tf.layers.inputLayer({
+      inputShape: [inputShape.x, inputShape.y, inputShape.z]
+    })
+  );
   // @ts-ignore
+  console.log('loading model ...');
   const mobilenet = await tf.loadLayersModel(modelUrl);
-  const layer = mobilenet.getLayer('conv_pw_13_relu');
-  // @ts-ignore
-  const truncatedMobilenet = tf.model({
-    inputs: mobilenet.inputs,
-    outputs: layer.output
-  });
-  for (const _layer of truncatedMobilenet.layers) {
-    _layer.trainable = false;
+  if (freeze) {
+    for (const _layer of mobilenet.layers) {
+      _layer.trainable = false;
+    }
   }
-  localModel.add(truncatedMobilenet);
+  localModel.add(mobilenet);
   // @ts-ignore
-  localModel.add(tf.layers.flatten({
-    // @ts-ignore
-    inputShape: layer.outputShape.slice(1) as tf.Shape
-  }));
+  localModel.add(tf.layers.flatten());
   // @ts-ignore
   localModel.add(tf.layers.dense({
     units: hiddenLayerUnits,
@@ -96,6 +104,11 @@ async function constructModel(options: Record<string, any>, labelMap: any, tf: a
       // @ts-ignore
       const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(ele.label, meta.labelMap.length))));
       const trainRes = await model.trainOnBatch(xs, ys) as number[];
+      tf.dispose(xs);
+      tf.dispose(ys);
+      dataBatch.forEach((ele: any) => {
+        tf.dispose(ele.data);
+      })
       if (j % Math.floor(batchesPerEpoch / 10) === 0) {
         console.log(`Iteration ${j}/${batchesPerEpoch} result --- loss: ${trainRes[0]} accuracy: ${trainRes[1]}`);
       }
@@ -112,13 +125,9 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = a
   } catch {
     tf = await context.importJS('@tensorflow/tfjs-node');
   }
-  // @ts-ignore
   const meta: Dataset.Types.ImageDatasetMeta = await api.dataset.getDatasetMeta() as Dataset.Types.ImageDatasetMeta;
-  // @ts-ignore
-  const labelMap = meta.labelMap;
-  // TODO add assert
 
-  const model = await constructModel(options, labelMap, tf);
+  const model = await constructModel(options, meta, tf);
   // @ts-ignore
   await trainModel(options, modelDir, model, api.dataset, tf);
 }

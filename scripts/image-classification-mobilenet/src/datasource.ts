@@ -46,12 +46,13 @@ const imageClassDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Data
   const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
   const extention = fileName.split('.');
 
-  assert.ok(extention[extention.length - 1] === 'zip', 'The dataset provided should be a zip file');
-
   let targetPath: string;
   if (/^file:\/\/.*/.test(url)) {
     targetPath = url.substring(7);
+    await fs.remove(dataDir);
+    await fs.symlink(targetPath, dataDir);
   } else {
+    assert.ok(extention[extention.length - 1] === 'zip', 'The dataset provided should be a zip file');
     console.log('downloading dataset ...');
     await download(url, dataDir, {
       extract: true
