@@ -1,8 +1,10 @@
 import { ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
 import type { Dataset } from '@pipcook/datacook';
 import { tinyYoloBody, getConstants } from './model-utils/model';
-import { lossWrap } from './model-utils/loss';
+import { lossWrap, yolo_nms } from './model-utils/loss';
 import { transformTargets } from './model-utils/dataset';
+import { yolo_boxes } from './model-utils/loss';
+import * as path from 'path';
 
 function getAnchors() {
   return tf.tensor([[10,14], [23,27], [37,58], [81,82], [135,169], [344,319]], [6,2], 'float32');
@@ -34,7 +36,35 @@ function createTinyModel(inputShape: number[],  anchors: any, numClasses: number
   return modelBody;
 }
 
-const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = async (api: Runtime<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
+const predict = async (api: Runtime<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
+  const { modelDir } = context.workspace;
+  const model = await tf.loadLayersModel(path.join(modelDir, 'model.json'));
+  let imageTensor = (await api.dataset.train.next())?.data
+  imageTensor = tf.expandDims(imageTensor, 0)
+  const result = model.predict(imageTensor);
+  const [output_0, output_1] = result as tf.Tensor[];
+  const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, 1);
+  const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, 1);
+  const outputs = yolo_nms([box0.slice(0, 3) as any, box1.slice(0, 3) as any]);
+  const {
+    boxes,
+    scores,
+    classes,
+    valid_detections
+  } = outputs;
+  console.log('detections: ');
+  const detections = [];
+  for (let i = 0; i < valid_detections; i++) {
+    console.log(`class: ${classes.slice([0, i], [1, 1]).reshape([1])}, scores: ${scores.slice([0, i], [1, 1])}, boxes: ${boxes.slice([0, i], [1, 1])}`);
+    detections.push({
+      classes: classes.slice([0, i], [1, 1]).reshape([1]),
+      scores: scores.slice([0, i], [1, 1]),
+      boxes: boxes.slice([0, i], [1, 1])
+    });
+  }
+}
+
+const train: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = async (api: Runtime<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
   const { modelDir } = context.workspace;
   const {
     epochs = 20,
@@ -113,4 +143,7 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = a
   await model.save(`file://${modelDir}`);
 }
 
-export default main;
+export default {
+  train,
+  predict
+}
