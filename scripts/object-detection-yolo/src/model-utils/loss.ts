@@ -5,13 +5,13 @@ declare global {
 
 function _meshgrid(n_a: number, n_b: number) {
   const repeatTensor = [];
-  for (let i = 0; i < n_a; i++) {
-    repeatTensor.push(tf.range(0, n_b));
+  for (let i = 0; i < n_b; i++) {
+    repeatTensor.push(...new Array(n_a).fill(i));
   }
 
   return [
     tf.reshape(tf.tile(tf.range(0, n_a), [n_b]), [n_b, n_a]),
-    tf.reshape(tf.stack(repeatTensor), [n_b, n_a])
+    tf.reshape(tf.tensor(repeatTensor), [n_b, n_a])
  ]
 }
 

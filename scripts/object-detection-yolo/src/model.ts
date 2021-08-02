@@ -106,7 +106,7 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = a
     batchesPerEpoch,
     epochs: epochs,
     callbacks: [
-      tf.callbacks.earlyStopping({monitor: 'loss', patience: 3, verbose: 1}),
+      tf.callbacks.earlyStopping({monitor: 'loss', patience: 5, verbose: 1}),
       tf.node.tensorBoard(`${modelDir}/tensorboard`)
     ]
   })
