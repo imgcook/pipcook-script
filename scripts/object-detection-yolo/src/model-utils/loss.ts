@@ -1,7 +1,5 @@
 import { booleanMask, broadcastTo, sparseCategoricalCrossentropy } from './utils';
-declare global {
-  var tf: any
-}
+import * as tf from '@tensorflow/tfjs-node';
 
 function _meshgrid(n_a: number, n_b: number) {
   const repeatTensor = [];
@@ -95,8 +93,8 @@ export function lossWrap (anchors: any, classes: number, ignore_thresh=0.5) {
       let true_xy = tf.div(tf.add(trueBox02, trueBox24), 2);
       let true_wh = tf.sub(trueBox24, trueBox02);
   
-      const true_wh0 = true_wh.slice([0,0,0,0,0], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
-      const true_wh1 = true_wh.slice([0,0,0,0,1], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
+      const true_wh0 = (true_wh as any).slice([0,0,0,0,0], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
+      const true_wh1 = (true_wh as any).slice([0,0,0,0,1], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
       const box_loss_scale = tf.sub(2, tf.mul(true_wh0, true_wh1));
   
       const grid_size = yTrue.shape[1] as number;
@@ -112,7 +110,7 @@ export function lossWrap (anchors: any, classes: number, ignore_thresh=0.5) {
       for (let i = 0; i < pred_box.shape[0]; i++) {
         const cur_pred_box = pred_box.slice([i], [1]).reshape(pred_box.shape.slice(1));
         const cur_true_box = true_box.slice([i], [1]).reshape(true_box.shape.slice(1));
-        const cur_obj_mask = obj_mask.slice([i], [1]).reshape(obj_mask.shape.slice(1));
+        const cur_obj_mask = (obj_mask as any).slice([i], [1]).reshape(obj_mask.shape.slice(1));
         const boolean_mask = broadcast_iou(cur_pred_box ,booleanMask(cur_true_box, tf.cast(cur_obj_mask, 'bool')));
         const reduceMax = tf.max(boolean_mask, -1);
         best_iou_arr.push(reduceMax);

@@ -1,37 +1,51 @@
-import { DataflowEntry, ScriptContext } from '@pipcook/core';
-import type * as Datacook from '@pipcook/datacook';
+import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+console.log('module.pathsmodule.pathsmodule.pathsmodule.pathsmodule.pathsmodule.paths', module.paths);
+import * as tf from '@tensorflow/tfjs-core';
+import { ImageDatasetMeta, TransedSample } from './types';
 
-//@ts-ignore
-const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> =
-  async (dataset: Datacook.Dataset.Types.Dataset<Datacook.Dataset.Types.Sample, any>, options: Record<string, any>, context: ScriptContext)  => {
+const resizeEntry: DataflowEntry<
+  DatasetPool.Types.ObjectDetection.Sample,
+  DatasetPool.Types.ObjectDetection.DatasetMeta,
+  TransedSample,
+  ImageDatasetMeta
+> =
+  async (datasetPool: DatasetPool.Types.ObjectDetection.DatasetPool, options: Record<string, any>, _: ScriptContext) => {
   const [ x = '-1', y = '-1' ] = options['size'];
 
   const parsedX = parseInt(x);
   const parsedY = parseInt(y);
-  if (parsedX == -1 || parsedY == -1) return;
-  const datasets = await context.dataCook.Dataset.transformDataset<Datacook.Dataset.Types.ImageDatasetMeta, Datacook.Dataset.Types.Sample>({
-    next: async (sample) => {
-      const originImage = await context.dataCook.Image.read(sample.data.url as string);
+  if (parsedX == -1 || parsedY == -1) {
+    throw new TypeError('Paremeter `size` is invlaid.');
+  }
+  return await DatasetPool.transformDatasetPool<
+    DatasetPool.Types.ObjectDetection.Sample,
+    DatasetPool.Types.ObjectDetection.DatasetMeta,
+    DataCook.Dataset.Types.Sample<tf.Tensor3D, DataCook.Dataset.Types.ObjectDetection.Label>,
+    ImageDatasetMeta
+  >({
+    transform: async (sample: DatasetPool.Types.ObjectDetection.Sample): Promise<TransedSample> => {
+      // todo
+      const originImage = await DataCook.Image.read(sample.data.uri as string);
       const originWidth = originImage.width;
       const originHeight = originImage.height;
       const ratioX = parsedX / originWidth;
       const ratioY = parsedY / originHeight;
       const resized = originImage.resize(parsedX, parsedY);
-      const labels = JSON.parse(JSON.stringify(sample.label));
+      const labels = sample.label;
       for (const curLabel of labels) {
         curLabel.bbox = [
           curLabel.bbox[0] * ratioX,
           curLabel.bbox[1] * ratioY,
           curLabel.bbox[2] * ratioX,
           curLabel.bbox[3] * ratioY
-        ]
+        ];
       }
       return {
         data: resized.toTensor(),
-        label: labels,
-      }
+        label: labels
+      };
     },
-    metadata: async (meta) => {
+    metadata: async (meta): Promise<ImageDatasetMeta> => {
       return {
         ...meta,
         dimension: {
@@ -41,9 +55,7 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
         }
       };
     }
-  }, dataset);
-
-  return datasets;
+  }, datasetPool);
 }
 
 /**
