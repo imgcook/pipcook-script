@@ -9,4 +9,4 @@ export interface ImageDatasetMeta extends DatasetPool.Types.ObjectDetection.Data
   }
 }
 
-export type TransedSample = DataCook.Dataset.Types.Sample<tf.Tensor3D, DataCook.Dataset.Types.ObjectDetection.Label>;
+export type TransedSample = DataCook.Dataset.Types.Sample<{tensor: tf.Tensor3D, originSize: { width: number, height :number }}, DataCook.Dataset.Types.ObjectDetection.Label>;

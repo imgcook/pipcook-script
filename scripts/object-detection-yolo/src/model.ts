@@ -123,7 +123,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<T
         const ys = tf.tensor(transedBboxes);
         return {
           value: {
-            xs: data?.data,
+            xs: data?.data.tensor,
             ys
           },
           done: false
@@ -152,14 +152,29 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<T
   await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
 }
 
+let predictModel: tf.LayersModel;
+let categories: string[];
+
 const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext): Promise<PredictResult> => {
   const { modelDir } = context.workspace;
-  const categories = await fs.readJSON(path.join(modelDir, 'categories.json'));
+
+  if (!categories) {
+    categories = await fs.readJSON(path.join(modelDir, 'categories.json'));
+  }
+  if (!predictModel) {
+    predictModel = await tf.loadLayersModel(`file://${path.join(modelDir, 'model.json')}`);
+  }
+
   await api.dataset.predicted?.seek(0);
-  const dataBatch = await api.dataset.predicted?.nextBatch(-1);
-  const model = await tf.loadLayersModel(`file://${path.join(modelDir, 'model.json')}`);
-  const tensors = tf.stack(dataBatch?.map(ele => ele.data) || []);
-  const result = model.predict(tensors);
+  const dataBatch = await api.dataset.predicted?.nextBatch(1);
+  const meta = await api.dataset.getDatasetMeta();
+
+  if (!(dataBatch?.length === 1)) {
+    throw new TypeError('no data');
+  }
+
+  const tensors = tf.stack(dataBatch.map(ele => ele.data.tensor));
+  const result = predictModel.predict(tensors);
   const [output_0, output_1] = result as tf.Tensor[];
   const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, 1);
   const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, 1);
@@ -172,10 +187,22 @@ const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: R
   } = outputs;
   const predictResult = [];
   for (let i = 0; i < valid_detections; i++) {
+    let boxArr = Array.from(tf.reshape(tf.slice(boxes, [0, i], [1, 1]), [4]).dataSync());
+    const scoresArr = tf.reshape(tf.slice(scores, [0, i], [1, 1]), [1]).dataSync();
+    const x = meta?.dimension.x as number;
+    const y = meta?.dimension.y as number;
+    const ratioX = dataBatch[0].data.originSize.width / x;
+    const ratioY = dataBatch[0].data.originSize.height / y
+    boxArr = [
+      boxArr[0] * x * ratioX,
+      boxArr[1] * y * ratioY,
+      (boxArr[2] - boxArr[0]) * x * ratioX,
+      (boxArr[3] - boxArr[1]) * y * ratioY
+    ]
     predictResult.push({
       class: categories[tf.reshape(tf.slice(classes, [0, i], [1, 1]), [1]).dataSync()[0]],
-      scores: tf.slice(scores, [0, i], [1, 1]),
-      boxes: tf.slice(boxes, [0, i], [1, 1])
+      scores: scoresArr[0],
+      boxes: boxArr
     })
   }
   return predictResult;

@@ -1,6 +1,4 @@
 import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
-console.log('module.pathsmodule.pathsmodule.pathsmodule.pathsmodule.pathsmodule.paths', module.paths);
-import * as tf from '@tensorflow/tfjs-core';
 import { ImageDatasetMeta, TransedSample } from './types';
 
 const resizeEntry: DataflowEntry<
@@ -20,7 +18,7 @@ const resizeEntry: DataflowEntry<
   return await DatasetPool.transformDatasetPool<
     DatasetPool.Types.ObjectDetection.Sample,
     DatasetPool.Types.ObjectDetection.DatasetMeta,
-    DataCook.Dataset.Types.Sample<tf.Tensor3D, DataCook.Dataset.Types.ObjectDetection.Label>,
+    TransedSample,
     ImageDatasetMeta
   >({
     transform: async (sample: DatasetPool.Types.ObjectDetection.Sample): Promise<TransedSample> => {
@@ -41,7 +39,13 @@ const resizeEntry: DataflowEntry<
         ];
       }
       return {
-        data: resized.toTensor(),
+        data: {
+          tensor: resized.toTensor(),
+          originSize: {
+            width: originWidth,
+            height: originHeight
+          }
+        },
         label: labels
       };
     },
