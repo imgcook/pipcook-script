@@ -1,7 +1,9 @@
-import { DataCook, DatasetPool, ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
+import { DataCook, DatasetPool, ModelEntry, Runtime, ScriptContext, PredictResult } from '@pipcook/core';
 import * as tf from '@tensorflow/tfjs-node';
+import * as path from 'path';
+import * as fs from 'fs-extra';
 import { tinyYoloBody, getConstants } from './model-utils/model';
-import { lossWrap } from './model-utils/loss';
+import { lossWrap, yolo_boxes, yolo_nms } from './model-utils/loss';
 import { transformTargets } from './model-utils/dataset';
 import { TransedSample, ImageDatasetMeta } from './types';
 
@@ -64,7 +66,7 @@ async function checkTrainDatasetPool(datasetPool: DatasetPool.Types.DatasetPool<
   return datasetPool as TrainDatasetPool<TransedSample, ImageDatasetMeta>;
 }
 
-const main: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
+const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
   const { modelDir } = context.workspace;
   const {
     epochs = 20,
@@ -147,6 +149,39 @@ const main: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<Tr
     ]
   })
   await model.save(`file://${modelDir}`);
+  await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
 }
 
-export default main;
+const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext): Promise<PredictResult> => {
+  const { modelDir } = context.workspace;
+  const categories = await fs.readJSON(path.join(modelDir, 'categories.json'));
+  await api.dataset.predicted?.seek(0);
+  const dataBatch = await api.dataset.predicted?.nextBatch(-1);
+  const model = await tf.loadLayersModel(`file://${path.join(modelDir, 'model.json')}`);
+  const tensors = tf.stack(dataBatch?.map(ele => ele.data) || []);
+  const result = model.predict(tensors);
+  const [output_0, output_1] = result as tf.Tensor[];
+  const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, 1);
+  const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, 1);
+  const outputs = yolo_nms([box0.slice(0, 3) as any, box1.slice(0, 3) as any]);
+  const {
+    boxes,
+    scores,
+    classes,
+    valid_detections
+  } = outputs;
+  const predictResult = [];
+  for (let i = 0; i < valid_detections; i++) {
+    predictResult.push({
+      class: categories[tf.reshape(tf.slice(classes, [0, i], [1, 1]), [1]).dataSync()[0]],
+      scores: tf.slice(scores, [0, i], [1, 1]),
+      boxes: tf.slice(boxes, [0, i], [1, 1])
+    })
+  }
+  return predictResult;
+}
+
+export {
+  train,
+  predict
+};
