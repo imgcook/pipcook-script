@@ -5,17 +5,54 @@ declare global {
 
 function _meshgrid(n_a: number, n_b: number) {
   const repeatTensor = [];
-  for (let i = 0; i < n_a; i++) {
-    repeatTensor.push(tf.range(0, n_b));
+  for (let i = 0; i < n_b; i++) {
+    repeatTensor.push(...new Array(n_a).fill(i));
   }
 
   return [
     tf.reshape(tf.tile(tf.range(0, n_a), [n_b]), [n_b, n_a]),
-    tf.reshape(tf.stack(repeatTensor), [n_b, n_a])
+    tf.reshape(tf.tensor(repeatTensor), [n_b, n_a])
  ]
 }
 
-function yolo_boxes(pred: any, anchors: any, classes: number): any {
+export function yolo_nms(outputs: tf.Tensor[][]) {
+  const b: tf.Tensor[] = [], c: tf.Tensor[] = [], t: tf.Tensor[] = [];
+  for (const o of outputs) {
+    b.push(tf.reshape(o[0], [o[0].shape[0], -1, o[0].shape[o[0].shape.length - 1]]));
+    c.push(tf.reshape(o[1], [o[1].shape[0], -1, o[1].shape[o[1].shape.length - 1]]));
+    t.push(tf.reshape(o[2], [o[2].shape[0], -1, o[2].shape[o[2].shape.length - 1]]));
+  }  
+
+  let bbox = tf.concat(b, 1);
+  const confidence = tf.concat(c, 1);
+  const class_probs = tf.concat(t, 1);
+  let scores = tf.mul(confidence, class_probs);
+  const dscores = tf.squeeze(scores, [0]);
+  scores = tf.max(dscores, [1]);
+  bbox = tf.reshape(bbox, [-1, 4]);
+  let classes = tf.argMax(dscores, 1);
+  const nonMaxScores = tf.image.nonMaxSuppressionWithScore(bbox as tf.Tensor2D, scores as tf.Tensor1D, 8, 0.5, 0.5);
+  let { selectedIndices, selectedScores } = nonMaxScores;
+  const num_valid_nms_boxes = selectedIndices.shape[0];
+  selectedIndices = tf.concat([selectedIndices, tf.zeros([8 - num_valid_nms_boxes], 'int32')], 0);
+  selectedScores = tf.concat([selectedScores, tf.zeros([8 - num_valid_nms_boxes], 'float32')], -1);
+  let boxes = tf.gather(bbox, selectedIndices)
+  boxes = tf.expandDims(boxes, 0);
+  scores=selectedScores;
+  scores = tf.expandDims(scores, 0);
+  classes = tf.gather(classes, selectedIndices);
+  classes = tf.expandDims(classes, 0);
+  let valid_detections = num_valid_nms_boxes;
+  return {
+    boxes,
+    scores,
+    classes,
+    valid_detections
+  }
+
+}
+
+export function yolo_boxes(pred: any, anchors: any, classes: number): any {
   const gridSize = pred.shape.slice(1, 3);
   let [ box_xy, box_wh, objectness, class_probs ] = tf.split(pred, [2, 2, 1, classes], -1);
   box_xy = tf.sigmoid(box_xy);
