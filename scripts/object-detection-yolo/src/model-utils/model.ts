@@ -1,4 +1,6 @@
-import * as tf from '@tensorflow/tfjs-node';
+declare global {
+  var tf: any
+}
 
 export function getConstants() {
   const yolo_tiny_anchors1 = tf.div(tf.tensor([
@@ -71,7 +73,7 @@ function DarknetTiny(name='') {
   let inputs = tf.layers.input({
     shape: [null, null, 3]
   });
-  let temp: any = inputs;
+  let temp = inputs;
   temp = DarknetConv2D_BN_Leaky(temp, 16, [3, 3]);
   temp = maxPooling2d(temp, [2, 2], [2, 2]);
   temp = DarknetConv2D_BN_Leaky(temp, 32, [3, 3]);
@@ -125,7 +127,7 @@ function YoloConvTiny(filters: number, x_in: any, name='') {
 }
 
 function YoloOutput(x_in: any, filters: number, anchors: number, numClasses: number, name='') {
-  let x: any = tf.layers.input({
+  let x = tf.layers.input({
     shape: x_in.shape.slice(1)
   });
   let inputs = x;

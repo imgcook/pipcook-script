@@ -1,6 +1,8 @@
 import { getLastIndex } from './loss';
 import { getConstants } from './model';
-import * as tf from '@tensorflow/tfjs-node';
+declare global {
+  var tf: any
+}
 
 
 export async function transformTargets(y_train: any, anchors: any, size: number) {
@@ -76,7 +78,7 @@ export async function transform_targets_for_output(y_true: any, grid_size: numbe
         let anchor_idx = tf.cast((await tf.whereAsync(anchor_eq)), 'int32');
         let grid_xy = tf.cast(tf.floorDiv(box_xy, tf.div(1, grid_size)), 'int32');
 
-        indexes.push([i, (grid_xy as any).slice([1], [1]).reshape([1]).dataSync()[0], (grid_xy as any).slice([0], [1]).reshape([1]).dataSync()[0], (anchor_idx as any).slice([0,0], [1,1]).reshape([1]).dataSync()[0]]);
+        indexes.push([i, grid_xy.slice([1], [1]).reshape([1]).dataSync()[0], grid_xy.slice([0], [1]).reshape([1]).dataSync()[0], anchor_idx.slice([0,0], [1,1]).reshape([1]).dataSync()[0]]);
         updates.push(
           [
           box.slice([0], [1]).reshape([1]).dataSync()[0],

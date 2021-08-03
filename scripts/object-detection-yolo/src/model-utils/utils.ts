@@ -1,4 +1,6 @@
-import * as tf from '@tensorflow/tfjs-node';
+declare global {
+  var tf: any
+}
 
 function whereImpl(condShape: number[], condVals: any) {
   const indices = [];
@@ -8,7 +10,7 @@ function whereImpl(condShape: number[], condVals: any) {
     }
   }
 
-  const inBuffer = tf.buffer(condShape, 'int32');
+  const inBuffer = global.tf.buffer(condShape, 'int32');
 
   const out = tf.buffer([indices.length, condShape.length], 'int32');
   for (let i = 0; i < indices.length; i++) {
@@ -76,13 +78,13 @@ export function sigmoidCrossEntropyWithLogits(
 
 export function sparseCategoricalCrossentropy(
   target: any, output: any): any {
-    const flatTarget = (tf.floor(tf.reshape(target, [-1])) as any).toInt();
+    const flatTarget = tf.floor(tf.reshape(target, [-1])).toInt();
     output = tf.clipByValue(output, tf.backend().epsilon(), 1 - tf.backend().epsilon());
     const outputShape = output.shape;
     let oneHotTarget;
     if (outputShape[outputShape.length - 1] > 1) {
       oneHotTarget =
-      (tf.oneHot(flatTarget, outputShape[outputShape.length - 1]) as any)
+      tf.oneHot(flatTarget, outputShape[outputShape.length - 1])
           .reshape(outputShape);
     } else {
       oneHotTarget = flatTarget.reshape(outputShape);

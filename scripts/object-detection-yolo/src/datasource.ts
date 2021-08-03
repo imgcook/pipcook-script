@@ -3,7 +3,8 @@
  * the data is conform to expectation.
  */
 
- import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+ import { DatasourceEntry, ScriptContext } from '@pipcook/core';
+ import type * as Datacook from '@pipcook/datacook';
  // @ts-ignore
  import download from 'pipcook-downloader';
  import * as fs from 'fs-extra';
@@ -11,7 +12,7 @@
  import glob from 'glob-promise';
  import * as assert from 'assert';
 
-function process(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
+function process(data: Datacook.Dataset.Types.Coco.Meta, curPath: string) {
   data?.images.forEach(image => {
     if (image.url && (!path.isAbsolute(image.url)) && (!image.url.startsWith('http'))) {
       image.url = path.join(curPath, image.url);
@@ -19,15 +20,12 @@ function process(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
   })
 }
 
-const objectDetectionDataSource: DatasourceEntry<
-  DataCook.Dataset.Types.Sample,
-  DatasetPool.Types.ObjectDetectionDatasetMeta
-> = async (options: Record<string, any>, context: ScriptContext) => {
+const objectDetectionDataSource: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
    const {
      url = ''
    } = options;
  
-   const { workspace } = context;
+   const { workspace, dataCook } = context;
  
    const { dataDir } = workspace;
  
@@ -57,9 +55,9 @@ const objectDetectionDataSource: DatasourceEntry<
    let annotationPath: string[] = await glob(path.join(dataDir, '**', '+(train|validation|test)', 'annotation.json'));
 
  
-   let train: DataCook.Dataset.Types.Coco.Meta | undefined = undefined;
-   let test: DataCook.Dataset.Types.Coco.Meta | undefined = undefined;
-   let valid: DataCook.Dataset.Types.Coco.Meta | undefined = undefined;
+   let train: Datacook.Dataset.Types.Coco.Meta | undefined = undefined;
+   let test: Datacook.Dataset.Types.Coco.Meta | undefined = undefined;
+   let valid: Datacook.Dataset.Types.Coco.Meta | undefined = undefined;
    let trainAnnotationPath: string = '';
    let testAnnotationPath: string = '';
    let validAnnotationPath: string = '';
@@ -83,11 +81,13 @@ const objectDetectionDataSource: DatasourceEntry<
    test && process(test, testAnnotationPath);
    valid && process(valid, validAnnotationPath);
   
-   return await DatasetPool.ObjectDetection.makeObjectDetectionDatasetFromCoco({
-    trainAnnotationObj: train as DataCook.Dataset.Types.Coco.Meta,
-    testAnnotationObj: test as DataCook.Dataset.Types.Coco.Meta,
-    validAnnotationObj: valid as DataCook.Dataset.Types.Coco.Meta,
+   const dataset = await dataCook.Dataset.makeDatasetFromCocoFormat({
+    trainAnnotationObj: train as Datacook.Dataset.Types.Coco.Meta,
+    testAnnotationObj: test as Datacook.Dataset.Types.Coco.Meta,
+    validAnnotationObj: valid as Datacook.Dataset.Types.Coco.Meta,
    });
+
+   return dataset as any;
 };
  
 export default objectDetectionDataSource;
