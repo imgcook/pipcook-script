@@ -194,9 +194,9 @@ const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: R
     ]
     predictResult.push({
       class: categories[tf.reshape(tf.slice(classes, [0, i], [1, 1]), [1]).dataSync()[0]],
-      scores: scoresArr[0],
-      boxes: boxArr
-    })
+      score: scoresArr[0],
+      box: boxArr
+    });
   }
   return predictResult;
 }

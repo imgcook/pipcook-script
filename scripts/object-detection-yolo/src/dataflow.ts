@@ -19,8 +19,10 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
     ImageDatasetMeta
   >({
     transform: async (sample: DatasetPool.Types.ObjectDetection.Sample): Promise<TransedSample> => {
-      // todo
-      const originImage = await DataCook.Image.read(sample.data.uri as string);
+      if (!sample.data.uri && sample.data.buffer) {
+        throw new TypeError('sample data is empty');
+      }
+      const originImage = await DataCook.Image.read(sample.data.uri as string || sample.data.buffer as ArrayBuffer);
       const originWidth = originImage.width;
       const originHeight = originImage.height;
       const ratioX = parsedX / originWidth;

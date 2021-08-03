@@ -17,7 +17,7 @@ function process(data: Datacook.Dataset.Types.Coco.Meta, curPath: string) {
     if (image.url && (!path.isAbsolute(image.url)) && (!image.url.startsWith('http'))) {
       image.url = path.join(curPath, image.url);
     }
-  })
+  });
 }
 
 const objectDetectionDataSource: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
