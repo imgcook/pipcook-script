@@ -1,5 +1,6 @@
-import { DataflowEntry, ScriptContext } from '@pipcook/core';
 import type * as Datacook from '@pipcook/datacook';
+import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+import { ImageDatasetMeta, TransedSample } from './types';
 
 //@ts-ignore
 const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> =
@@ -8,10 +9,18 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
 
   const parsedX = parseInt(x);
   const parsedY = parseInt(y);
-  if (parsedX == -1 || parsedY == -1) return;
-  const datasets = await context.dataCook.Dataset.transformDataset<Datacook.Dataset.Types.ImageDatasetMeta, Datacook.Dataset.Types.Sample>({
-    next: async (sample) => {
-      const originImage = await context.dataCook.Image.read(sample.data.url as string);
+  if (parsedX == -1 || parsedY == -1) {
+    throw new TypeError('Paremeter `size` is invlaid.');
+  }
+  return await DatasetPool.transformDatasetPool<
+    DatasetPool.Types.ObjectDetection.Sample,
+    DatasetPool.Types.ObjectDetection.DatasetMeta,
+    TransedSample,
+    ImageDatasetMeta
+  >({
+    transform: async (sample: DatasetPool.Types.ObjectDetection.Sample): Promise<TransedSample> => {
+      // todo
+      const originImage = await DataCook.Image.read(sample.data.uri as string);
       const originWidth = originImage.width;
       const originHeight = originImage.height;
       const ratioX = parsedX / originWidth;
@@ -27,9 +36,15 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
         ]
       }
       return {
-        data: resized.toTensor(),
-        label: labels,
-      }
+        data: {
+          tensor: resized.toTensor(),
+          originSize: {
+            width: originWidth,
+            height: originHeight
+          }
+        },
+        label: labels
+      };
     },
     metadata: async (meta) => {
       return {
