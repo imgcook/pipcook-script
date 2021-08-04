@@ -63,6 +63,7 @@ const resizeEntry: DataflowEntry<DataCook.Dataset.Types.ImageClassification.Samp
     metadata: async (meta): Promise<TransedMetadata> => {
       return {
         ...meta,
+        type: DataCook.Dataset.Types.DatasetType.Image,
         dimension: {
           x: parsedX,
           y: parsedY,
