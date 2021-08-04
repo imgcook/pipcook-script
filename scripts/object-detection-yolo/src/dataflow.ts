@@ -1,10 +1,13 @@
-import type * as Datacook from '@pipcook/datacook';
 import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
 import { ImageDatasetMeta, TransedSample } from './types';
 
-//@ts-ignore
-const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> =
-  async (dataset: Datacook.Dataset.Types.Dataset<Datacook.Dataset.Types.Sample, any>, options: Record<string, any>, context: ScriptContext)  => {
+const resizeEntry: DataflowEntry<
+  DatasetPool.Types.ObjectDetection.Sample,
+  DatasetPool.Types.ObjectDetection.DatasetMeta,
+  TransedSample,
+  ImageDatasetMeta
+> =
+  async (datasetPool: DatasetPool.Types.ObjectDetection.DatasetPool, options: Record<string, any>, _: ScriptContext) => {
   const [ x = '-1', y = '-1' ] = options['size'];
 
   const parsedX = parseInt(x);
@@ -51,7 +54,7 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
         label: labels
       };
     },
-    metadata: async (meta) => {
+    metadata: async (meta): Promise<ImageDatasetMeta> => {
       return {
         ...meta,
         type: DataCook.Dataset.Types.DatasetType.Image,
@@ -62,7 +65,7 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
         }
       };
     }
-  }, dataset);
+  }, datasetPool);
 }
 
 /**

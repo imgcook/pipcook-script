@@ -6,8 +6,7 @@ import * as fs from 'fs-extra';
 import glob from 'glob-promise';
 // @ts-ignore
 import download from 'pipcook-downloader';
-import { ScriptContext, DatasourceEntry, DatasetPool } from '@pipcook/core';
-import * as DataCook from '@pipcook/datacook';
+import { ScriptContext, DatasourceEntry, DatasetPool, DataCook } from '@pipcook/core';
 
 type Sample = DataCook.Dataset.Types.Sample<string, string>;
 type ScriptDatasetPool = DatasetPool.Types.DatasetPool<Sample, DatasetPool.Types.ClassificationDatasetMeta>;

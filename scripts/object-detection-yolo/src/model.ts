@@ -5,6 +5,7 @@ import * as fs from 'fs-extra';
 import { tinyYoloBody, getConstants } from './model-utils/model';
 import { lossWrap, yolo_boxes, yolo_nms } from './model-utils/loss';
 import { transformTargets } from './model-utils/dataset';
+import { TransedSample, ImageDatasetMeta } from './types';
 
 function getAnchors() {
   return tf.tensor([[10,14], [23,27], [37,58], [81,82], [135,169], [344,319]], [6,2], 'float32');
@@ -71,25 +72,29 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<T
     epochs = 20,
     batchSize = 16
   } = options;
-  let tf: any;
-  try {
-    tf = await context.importJS('@tensorflow/tfjs-node-gpu');
-  } catch {
-    tf = await context.importJS('@tensorflow/tfjs-node');
-  }
 
-  global.tf = tf;
-
-  const dataset = api.dataset;
+  const dataset = await checkTrainDatasetPool(api.dataset);
   const meta = await dataset.getDatasetMeta();
+  if (!meta) {
+    throw new TypeError('DatasetMeta cannot be null.');
+  }
+  if (!dataset.train) {
+    throw new TypeError('Train dataset cannot be null.');
+  }
+  if (!meta?.size?.train) {
+    throw new TypeError('The size of train dataset is unknown.');
+  }
+  if (!Array.isArray(meta.categories) || meta.categories.length === 0) {
+    throw new TypeError('Categories is invalid.');
+  }
   const { train: trainSize } = meta.size;
   const batchesPerEpoch = Math.floor(trainSize / batchSize);
 
-  const numClasses = Object.keys(meta.labelMap).length;
+  const numClasses = meta.categories.length;
   const anchors = getAnchors();
   const freezeBody = true;
 
-  const inputShape = [416,416];
+  const inputShape = [ 416, 416 ];
   const model = createTinyModel(inputShape, anchors, numClasses, freezeBody);
   const loss = [
     lossWrap(getConstants().yolo_tiny_anchors1, numClasses),
@@ -108,12 +113,14 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<T
         if (!data) {
           await dataset.train.seek(0);
           data = await dataset.train.next();
+          if (!data) {
+            throw new TypeError('Read sample error.');
+          }
         }
-        let bboxes: number[][] = data?.label.map((ele2: any) => ele2.bbox);
-        bboxes = JSON.parse(JSON.stringify(bboxes));
-        const labels: number[] = data?.label.map((ele2: any) =>Number(ele2.category_id) - 1 );
-        bboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
-        const ys = tf.tensor(bboxes);
+        const bboxes = data.label.map((ele2) => ele2.bbox);
+        const labels = data.label.map((ele2) => meta.categories?.indexOf(ele2.name)) as number[];
+        const transedBboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
+        const ys = tf.tensor(transedBboxes);
         return {
           value: {
             xs: data?.data.tensor,
@@ -125,7 +132,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<T
     };
     return iterator;
   }
-  let ds = tf.data.generator(makeIterator).batch(batchSize).mapAsync(async (data: any) => {
+  let ds = tf.data.generator(makeIterator as any).batch(batchSize).mapAsync(async (data: any) => {
     const ys = await transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416);
     return {
       xs: data.xs,
