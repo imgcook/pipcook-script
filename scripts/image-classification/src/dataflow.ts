@@ -1,8 +1,11 @@
 import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
-import { TransedSample, TransedMetadata } from './types';
+import { TransedSample as OUT_SAMPLE, TransedMetadata as OUT_META } from './types';
 
-const resizeEntry: DataflowEntry<DataCook.Dataset.Types.ImageClassification.Sample, DatasetPool.Types.ImageClassification.DatasetMeta, TransedSample, TransedMetadata> =
-  async (dataset: DatasetPool.Types.ImageClassification.DatasetPool, options: Record<string, any>, _: ScriptContext): Promise<DatasetPool.Types.DatasetPool<TransedSample, TransedMetadata>> => {
+import IN_SAMPLE = DataCook.Dataset.Types.ImageClassification.Sample;
+import IN_META = DatasetPool.Types.ImageClassification.DatasetMeta;
+
+const resizeEntry: DataflowEntry<IN_SAMPLE, IN_META, OUT_SAMPLE, OUT_META> =
+  async (dataset: DatasetPool.Types.ImageClassification.DatasetPool, options: Record<string, any>, _: ScriptContext): Promise<DatasetPool.Types.DatasetPool<OUT_SAMPLE, OUT_META>> => {
   const [ x = '-1', y = '-1' ] = options['size'];
   const { normalize = false } = options;
 
@@ -33,13 +36,8 @@ const resizeEntry: DataflowEntry<DataCook.Dataset.Types.ImageClassification.Samp
   dataset.valid?.seek(0);
   dataset.predicted?.seek(0);
 
-  return DatasetPool.transformDatasetPool<
-      DataCook.Dataset.Types.ImageClassification.Sample,
-      DatasetPool.Types.ImageClassification.DatasetMeta,
-      TransedSample,
-      TransedMetadata
-    >({
-    transform: async (sample): Promise<TransedSample> => {
+  return dataset.transform({
+    transform: async (sample): Promise<OUT_SAMPLE> => {
       if (!sample.data.uri && !sample.data.buffer) {
         throw new TypeError('Invalid sample.');
       }
@@ -60,7 +58,7 @@ const resizeEntry: DataflowEntry<DataCook.Dataset.Types.ImageClassification.Samp
         label: sample.label
       };
     },
-    metadata: async (meta): Promise<TransedMetadata> => {
+    metadata: async (meta?): Promise<OUT_META> => {
       return {
         ...meta,
         type: DataCook.Dataset.Types.DatasetType.Image,
@@ -71,7 +69,7 @@ const resizeEntry: DataflowEntry<DataCook.Dataset.Types.ImageClassification.Samp
         }
       };
     }
-  }, dataset);
+  });
 }
 
 /**

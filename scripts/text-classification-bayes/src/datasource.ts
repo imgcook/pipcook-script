@@ -10,7 +10,7 @@ import { ScriptContext, DatasourceEntry, DatasetPool, DataCook } from '@pipcook/
 
 type Sample = DataCook.Dataset.Types.Sample<string, string>;
 type ScriptDatasetPool = DatasetPool.Types.DatasetPool<Sample, DatasetPool.Types.ClassificationDatasetMeta>;
-type Entry = DatasourceEntry<DataCook.Dataset.Types.Sample<string, string>, DatasetPool.Types.ClassificationDatasetMeta>;
+type Entry = DatasourceEntry<Sample, DatasetPool.Types.ClassificationDatasetMeta>;
 
 /**
  * collect csv data
@@ -53,20 +53,20 @@ const textClassDataCollect: Entry = async (option: Record<string, any>, context:
   });
   const categories = (await datasetPool.train?.nextBatch(-1))?.map((sample) => sample.label['output']);
   await datasetPool.train?.seek(0);
-  return DatasetPool.transformDatasetPool<DataCook.Dataset.Types.Csv.Sample, DatasetPool.Types.Csv.DatasetMeta, Sample, DatasetPool.Types.ClassificationDatasetMeta>({
-    transform: async (sample): Promise<Sample> => {
+  return datasetPool.transform({
+    transform: async (sample: DataCook.Dataset.Types.Csv.Sample): Promise<Sample> => {
       return {
         data: sample.data['﻿input'],
         label: sample.label['output']
       };
     },
-    metadata: async (meta) => {
+    metadata: async (meta?: DatasetPool.Types.Csv.DatasetMeta): Promise<DatasetPool.Types.ClassificationDatasetMeta> => {
       return {
         ...meta,
         categories
       };
     }
-  }, datasetPool);
+  });
 };
 
 export default textClassDataCollect;

@@ -15,13 +15,8 @@ const resizeEntry: DataflowEntry<
   if (parsedX == -1 || parsedY == -1) {
     throw new TypeError('Paremeter `size` is invlaid.');
   }
-  return await DatasetPool.transformDatasetPool<
-    DatasetPool.Types.ObjectDetection.Sample,
-    DatasetPool.Types.ObjectDetection.DatasetMeta,
-    TransedSample,
-    ImageDatasetMeta
-  >({
-    transform: async (sample: DatasetPool.Types.ObjectDetection.Sample): Promise<TransedSample> => {
+  return datasetPool.transform({
+    transform: async (sample): Promise<TransedSample> => {
       if (!sample.data.uri && !sample.data.buffer) {
         throw new TypeError('sample data is empty');
       }
@@ -65,7 +60,7 @@ const resizeEntry: DataflowEntry<
         }
       };
     }
-  }, datasetPool);
+  });
 }
 
 /**

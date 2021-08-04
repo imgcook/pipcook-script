@@ -17,6 +17,9 @@ module.exports = {
   },
   resolve: {
     extensions: [ '.ts', '.js' ]
+  }, 
+  externals: {
+    '@pipocook/core': 'commonjs2 @pipcook/core'
   },
   output: {
     path: path.resolve(__dirname, "./build"),
