@@ -30,7 +30,6 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
   modelUrl = defaultWeightsMap[modelUrl] || modelUrl;
   const categories = meta.categories;
   const inputShape = meta.dimension;
-  console.log('inputShape', inputShape)
   if (!Array.isArray(categories)) {
     throw new TypeError('categorie is not found');
   }
