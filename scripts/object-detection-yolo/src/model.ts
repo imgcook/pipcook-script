@@ -1,4 +1,4 @@
-import { DataCook, DatasetPool, ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
+import { DataCook, DatasetPool, ModelEntry, PredictEntry, Runtime, ScriptContext } from '@pipcook/core';
 import * as tf from '@tensorflow/tfjs-node';
 import * as path from 'path';
 import * as fs from 'fs-extra';
@@ -66,7 +66,7 @@ async function checkTrainDatasetPool(datasetPool: DatasetPool.Types.DatasetPool<
   return datasetPool as TrainDatasetPool<TransedSample, ImageDatasetMeta>;
 }
 
-const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
+const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, context) => {
   const { modelDir } = context.workspace;
   const {
     epochs = 20,
@@ -155,7 +155,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<T
 let predictModel: tf.LayersModel;
 let categories: string[];
 
-const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext): Promise<DatasetPool.Types.ObjectDetection.PredictResult> => {
+const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, context): Promise<DatasetPool.Types.ObjectDetection.PredictResult> => {
   const { modelDir } = context.workspace;
 
   if (!categories) {
@@ -181,12 +181,8 @@ const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: R
 
   const finalResult = [];
   for (let i = 0; i < output_0.shape[0]; i++) {
-    const curbox0 = box0.slice(0, 3).map((box: tf.Tensor) => {
-      return tf.slice(box, [i], [1]);
-    });
-    const curbox1 = box1.slice(0, 3).map((box: tf.Tensor) => {
-      return tf.slice(box, [i], [1]);
-    });
+    const curbox0 = box0.slice(0, 3).map((box: tf.Tensor) => tf.slice(box, [i], [1]));
+    const curbox1 = box1.slice(0, 3).map((box: tf.Tensor) => tf.slice(box, [i], [1]));
     const outputs = yolo_nms([curbox0, curbox1]);
     const {
       boxes,

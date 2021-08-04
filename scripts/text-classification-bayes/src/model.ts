@@ -79,7 +79,7 @@ const modelTrain = async (runtime: Runtime<Types.Sample, DatasetPool.Types.Objec
 };
 
 const main: ModelEntry<Types.Sample, DatasetPool.Types.ObjectDetectionDatasetMeta>
-  = async (runtime: Runtime<Types.Sample, DatasetPool.Types.ObjectDetectionDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
+  = async (runtime, options, context) => {
   let model = await modelDefine(options, context);
   model = await modelTrain(runtime, options, context, model);
 };

@@ -6,8 +6,7 @@ const resizeEntry: DataflowEntry<
   DatasetPool.Types.ObjectDetection.DatasetMeta,
   TransedSample,
   ImageDatasetMeta
-> =
-  async (datasetPool: DatasetPool.Types.ObjectDetection.DatasetPool, options: Record<string, any>, _: ScriptContext) => {
+> = async (datasetPool, options, _) => {
   const [ x = '-1', y = '-1' ] = options['size'];
 
   const parsedX = parseInt(x);

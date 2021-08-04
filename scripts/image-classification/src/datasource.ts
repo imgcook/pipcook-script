@@ -28,7 +28,7 @@ import * as assert from 'assert';
  * @param url path of the data, if it comes from local file, please add file:// as prefix
  */
 const imageClassDataCollect: DatasourceEntry<DataCook.Dataset.Types.ImageClassification.Sample, DatasetPool.Types.ImageClassification.DatasetMeta>
-  = async (options: Record<string, any>, context: ScriptContext): Promise<DatasetPool.Types.ImageClassification.DatasetPool> => {
+  = async (options, context) => {
   const {
     url = ''
   } = options;

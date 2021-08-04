@@ -1,4 +1,4 @@
-import { ModelEntry, Runtime, ScriptContext, PredictResult } from '@pipcook/core';
+import { ModelEntry, PredictResult, PredictEntry } from '@pipcook/core';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { TransedSample, TransedMetadata } from './types';
@@ -17,7 +17,7 @@ const defaultWeightsMap: {[key: string]: string} = {
  * @param metrics (string | LossOrMetricFn | Array | {[outputName: string]: string | LossOrMetricFn}): [optional / default = ['accuracy']]
  * @param hiddenLayerUnits (number): [optional / default = 10]
 */
-async function constructModel(options: Record<string, any>, meta: TransedMetadata){
+async function constructModel(options: Record<string, any>, meta: TransedMetadata) {
   let {
     // @ts-ignore
     optimizer = tf.train.adam(),
@@ -113,7 +113,7 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
   await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
 }
 
-const train: ModelEntry<TransedSample, TransedMetadata> = async (api: Runtime<TransedSample, TransedMetadata>, options: Record<string, any>, context: ScriptContext) => {
+const train: ModelEntry<TransedSample, TransedMetadata> = async (api, options, context) => {
   const { modelDir } = context.workspace;
   const meta = await api.dataset.getDatasetMeta();
   if (!meta) {
@@ -127,7 +127,7 @@ const train: ModelEntry<TransedSample, TransedMetadata> = async (api: Runtime<Tr
 let predictModel: tf.LayersModel;
 let categories: string[];
 
-const predict = async (api: Runtime<TransedSample, TransedMetadata>, options: Record<string, any>, context: ScriptContext): Promise<PredictResult> => {
+const predict: PredictEntry<TransedSample, TransedMetadata> = async (api, _, context): Promise<PredictResult> => {
   const { modelDir } = context.workspace;
 
   if (!categories) {

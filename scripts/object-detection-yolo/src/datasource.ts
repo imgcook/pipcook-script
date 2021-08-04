@@ -22,7 +22,7 @@ function process(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
 const objectDetectionDataSource: DatasourceEntry<
   DataCook.Dataset.Types.Sample,
   DatasetPool.Types.ObjectDetectionDatasetMeta
-> = async (options: Record<string, any>, context: ScriptContext) => {
+> = async (options, context) => {
    const {
      url = ''
    } = options;
