@@ -1,9 +1,6 @@
 import { ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
-import type { Dataset } from '@pipcook/datacook';
-
-function argMax(array: any) {
-  return [].map.call(array, (x: any, i: any) => [ x, i ]).reduce((r: any, a: any) => (a[0] > r[0] ? a : r))[1];
-}
+import { TransedSample, TransedMetadata } from './types';
+import * as tf from '@tensorflow/tfjs-node';
 
 const defaultWeightsMap: {[key: string]: string} = {
   'resnet': 'https://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/resnet50_tfjs/model.json',
@@ -18,7 +15,7 @@ const defaultWeightsMap: {[key: string]: string} = {
  * @param metrics (string | LossOrMetricFn | Array | {[outputName: string]: string | LossOrMetricFn}): [optional / default = ['accuracy']]
  * @param hiddenLayerUnits (number): [optional / default = 10]
 */
-async function constructModel(options: Record<string, any>, meta: Dataset.Types.ImageDatasetMeta , tf: any){
+async function constructModel(options: Record<string, any>, meta: TransedMetadata){
   let {
     // @ts-ignore
     optimizer = tf.train.adam(),
@@ -29,9 +26,9 @@ async function constructModel(options: Record<string, any>, meta: Dataset.Types.
     freeze = true
   } = options;
   modelUrl = defaultWeightsMap[modelUrl] || modelUrl;
-  const labelMap = meta.labelMap;
+  const categories = meta.categories;
   const inputShape = meta.dimension;
-  const NUM_CLASSES = Object.keys(labelMap).length;
+  const NUM_CLASSES = categories.length;
   // @ts-ignore
   let model: tf.LayersModel | null = null;
   // @ts-ignore
@@ -84,7 +81,7 @@ async function constructModel(options: Record<string, any>, meta: Dataset.Types.
  * @param optimizer : need to specify optimizer
  */
 // @ts-ignore
- async function trainModel(options: Record<string, any>, modelDir: string, model: tf.LayersModel, dataset: DataSourceApi<Image>, tf: any) {
+ async function trainModel(options: Record<string, any>, modelDir: string, model: tf.LayersModel, dataset: DataSourceApi<Image>) {
   const {
     epochs = 10,
     batchSize = 16
@@ -102,7 +99,7 @@ async function constructModel(options: Record<string, any>, meta: Dataset.Types.
       // @ts-ignore
       const xs = tf.tidy(() => tf.stack(dataBatch.map((ele) => ele.data)));
       // @ts-ignore
-      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(ele.label, meta.labelMap.length))));
+      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(ele.label, meta.categories.length))));
       const trainRes = await model.trainOnBatch(xs, ys) as number[];
       tf.dispose(xs);
       tf.dispose(ys);
@@ -117,17 +114,11 @@ async function constructModel(options: Record<string, any>, meta: Dataset.Types.
   await model.save(`file://${modelDir}`);
 }
 
-const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta> = async (api: Runtime<Dataset.Types.Sample, Dataset.Types.ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
+const main: ModelEntry<TransedSample, TransedMetadata> = async (api: Runtime<TransedSample, TransedMetadata>, options: Record<string, any>, context: ScriptContext) => {
   const { modelDir } = context.workspace;
-  let tf;
-  try {
-    tf = await context.importJS('@tensorflow/tfjs-node-gpu');
-  } catch {
-    tf = await context.importJS('@tensorflow/tfjs-node');
-  }
-  const meta: Dataset.Types.ImageDatasetMeta = await api.dataset.getDatasetMeta() as Dataset.Types.ImageDatasetMeta;
+  const meta = await api.dataset.getDatasetMeta();
 
-  const model = await constructModel(options, meta, tf);
+  const model = await constructModel(options, meta);
   // @ts-ignore
   await trainModel(options, modelDir, model, api.dataset, tf);
 }

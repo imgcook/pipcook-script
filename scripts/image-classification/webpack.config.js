@@ -19,6 +19,11 @@ module.exports = {
   resolve: {
     extensions: [ '.ts', '.js' ]
   },
+  externals: {
+    '@pipocook/core': 'commonjs2 @pipcook/core',
+    '@tensorflow/tfjs-node': 'commonjs2 @tensorflow/tfjs-node',
+    '@tensorflow/tfjs-node-gpu': 'commonjs2 @tensorflow/tfjs-node-gpu'
+  },
   output: {
     path: path.resolve(__dirname, "./build"),
     filename: "[name].js",

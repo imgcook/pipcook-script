@@ -3,8 +3,7 @@
  * the data is conform to expectation.
  */
 
-import { DatasourceEntry, ScriptContext } from '@pipcook/core';
-import type * as Datacook from '@pipcook/datacook';
+import { DatasourceEntry, ScriptContext, DataCook, DatasetPool } from '@pipcook/core';
 // @ts-ignore
 import download from 'pipcook-downloader';
 import * as fs from 'fs-extra';
@@ -28,12 +27,13 @@ import * as assert from 'assert';
  *
  * @param url path of the data, if it comes from local file, please add file:// as prefix
  */
-const imageClassDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
+const imageClassDataCollect: DatasourceEntry<DataCook.Dataset.Types.ImageClassification.Sample, DatasetPool.Types.ImageClassification.DatasetMeta>
+  = async (options: Record<string, any>, context: ScriptContext): Promise<DatasetPool.Types.ImageClassification.DatasetPool> => {
   const {
     url = ''
   } = options;
 
-  const { workspace, dataCook } = context;
+  const { workspace } = context;
 
   const { dataDir } = workspace;
 
@@ -63,52 +63,38 @@ const imageClassDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Data
   console.log('unzip and collecting data...');
   let imagePaths = await glob(path.join(dataDir, '**', '+(train|validation|test)', '*', '*.+(jpg|jpeg|png)'));
 
-  // TODO utils for making dataset
-  const train: any[] = [];
-  let trainOffset = 0;
-  const test: any[] = [];
-  let testOffset = 0;
-  const categories: Array<string> = [];
+  const train: DataCook.Dataset.Types.ImageClassification.ImageDesc[] = [];
+  const test: DataCook.Dataset.Types.ImageClassification.ImageDesc[] = [];
+  const valid: DataCook.Dataset.Types.ImageClassification.ImageDesc[] = [];
 
   for (const imagePath of imagePaths) {
     const splitString = imagePath.split(path.sep);
     const trainType = splitString[splitString.length - 3];
     const category = splitString[splitString.length - 2];
 
-    let categoryIndex = categories.findIndex((value) => value === category);
-    if (categoryIndex === -1) {
-      categoryIndex = categories.length;
-      categories.push(category);
-    }
-
     if (trainType === 'train') {
-      train.push({ data: imagePath, label: categoryIndex});
+      train.push({
+        category,
+        uri: imagePath
+      });
     } else if (trainType === 'test') {
-      test.push({ data: imagePath, label: categoryIndex});
+      test.push({
+        category,
+        uri: imagePath
+      });
+    } else if (trainType === 'validation') {
+      valid.push({
+        category,
+        uri: imagePath
+      });
     }
   }
 
-  const sample = await context.dataCook.Image.read(train[0].data);
-
-  const meta = {
-    type: dataCook.Dataset.Types.DatasetType.Image,
-    size: {
-      train: train.length,
-      test: train.length
-    },
-    dimension: {
-      x: sample.width,
-      y: sample.height,
-      z: sample.channel
-    },
-    //@ts-ignore
-    labelMap: categories
-  }
-
-  return dataCook.Dataset.makeDataset({
-    trainData: train,
-    testData: test
-  }, meta);
+  return DatasetPool.makeImageClassificationDatasetFromList({
+    train,
+    test,
+    valid: valid.length > 0 ? valid : undefined
+  });
 };
 
 export default imageClassDataCollect;

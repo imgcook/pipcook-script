@@ -3,7 +3,7 @@
  * the data is conform to expectation.
  */
 
- import { DatasourceEntry, ScriptContext } from '@pipcook/core';
+ import { DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
  import type * as Datacook from '@pipcook/datacook';
  // @ts-ignore
  import download from 'pipcook-downloader';
@@ -81,13 +81,11 @@ const objectDetectionDataSource: DatasourceEntry<Datacook.Dataset.Types.Sample, 
    test && process(test, testAnnotationPath);
    valid && process(valid, validAnnotationPath);
   
-   const dataset = await dataCook.Dataset.makeDatasetFromCocoFormat({
-    trainAnnotationObj: train as Datacook.Dataset.Types.Coco.Meta,
-    testAnnotationObj: test as Datacook.Dataset.Types.Coco.Meta,
-    validAnnotationObj: valid as Datacook.Dataset.Types.Coco.Meta,
+   return await DatasetPool.makeObjectDetectionDatasetFromCoco({
+    trainAnnotationObj: train as DataCook.Dataset.Types.Coco.Meta,
+    testAnnotationObj: test as DataCook.Dataset.Types.Coco.Meta,
+    validAnnotationObj: valid as DataCook.Dataset.Types.Coco.Meta,
    });
-
-   return dataset as any;
 };
  
 export default objectDetectionDataSource;
