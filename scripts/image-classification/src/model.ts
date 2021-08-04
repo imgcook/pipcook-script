@@ -30,20 +30,18 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
   modelUrl = defaultWeightsMap[modelUrl] || modelUrl;
   const categories = meta.categories;
   const inputShape = meta.dimension;
+  console.log('inputShape', inputShape)
   if (!Array.isArray(categories)) {
     throw new TypeError('categorie is not found');
   }
   const NUM_CLASSES = categories?.length;
-  // @ts-ignore
   let model: tf.LayersModel | null = null;
-  // @ts-ignore
   const localModel = tf.sequential();
   localModel.add(
     tf.layers.inputLayer({
       inputShape: [inputShape.x, inputShape.y, inputShape.z]
     })
   );
-  // @ts-ignore
   console.log('loading model ...');
   const mobilenet = await tf.loadLayersModel(modelUrl);
   if (freeze) {
@@ -52,19 +50,15 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
     }
   }
   localModel.add(mobilenet);
-  // @ts-ignore
   localModel.add(tf.layers.flatten());
-  // @ts-ignore
   localModel.add(tf.layers.dense({
     units: hiddenLayerUnits,
     activation: 'relu'
   }));
-  // @ts-ignore
   localModel.add(tf.layers.dense({
     units: NUM_CLASSES,
     activation: 'softmax'
   }));
-  // @ts-ignore
   model = localModel as tf.LayersModel;
 
   model.compile({
