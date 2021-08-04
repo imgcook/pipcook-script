@@ -1,4 +1,4 @@
-import { DataCook, DatasetPool, ModelEntry, Runtime, ScriptContext, PredictResult } from '@pipcook/core';
+import { DataCook, DatasetPool, ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
 import * as tf from '@tensorflow/tfjs-node';
 import * as path from 'path';
 import * as fs from 'fs-extra';
@@ -148,7 +148,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<T
 let predictModel: tf.LayersModel;
 let categories: string[];
 
-const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext): Promise<PredictResult> => {
+const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext): Promise<DatasetPool.Types.ObjectDetection.PredictResult> => {
   const { modelDir } = context.workspace;
 
   if (!categories) {
@@ -161,9 +161,8 @@ const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: R
   await api.dataset.predicted?.seek(0);
   const dataBatch = await api.dataset.predicted?.nextBatch(-1);
   const meta = await api.dataset.getDatasetMeta();
-  dataBatch?.push(dataBatch[0]);
   if (!dataBatch) {
-    throw new TypeError('no data');
+    throw new TypeError('No data found in dataset.');
   }
 
   const tensors = tf.stack(dataBatch.map(ele => ele.data.tensor));
@@ -190,29 +189,27 @@ const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: R
     } = outputs;
     const predictResult = [];
     for (let i = 0; i < valid_detections; i++) {
-      let boxArr = Array.from(tf.reshape(tf.slice(boxes, [0, i], [1, 1]), [4]).dataSync());
+      const boxArr = Array.from(tf.reshape(tf.slice(boxes, [0, i], [1, 1]), [4]).dataSync());
       const scoresArr = tf.reshape(tf.slice(scores, [0, i], [1, 1]), [1]).dataSync();
       const x = meta?.dimension.x as number;
       const y = meta?.dimension.y as number;
       const ratioX = dataBatch[0].data.originSize.width / x;
-      const ratioY = dataBatch[0].data.originSize.height / y
-      boxArr = [
+      const ratioY = dataBatch[0].data.originSize.height / y;
+      const box: DataCook.Dataset.Types.ObjectDetection.Bbox = [
         boxArr[0] * x * ratioX,
         boxArr[1] * y * ratioY,
         (boxArr[2] - boxArr[0]) * x * ratioX,
         (boxArr[3] - boxArr[1]) * y * ratioY
-      ]
+      ];
       const id = tf.reshape(tf.slice(classes, [0, i], [1, 1]), [1]).dataSync()[0];
       predictResult.push({
-        class: {
-          id,
-          categorie: categories[id]
-        },
+        id,
+        category: categories[id],
         score: scoresArr[0],
-        box: boxArr
+        box: box
       });
     }
-    finalResult.push(predictResult)
+    finalResult.push(predictResult);
   }
   return finalResult;
 }

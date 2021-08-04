@@ -54,6 +54,7 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
     metadata: async (meta) => {
       return {
         ...meta,
+        type: DataCook.Dataset.Types.DatasetType.Image,
         dimension: {
           x: parsedX,
           y: parsedY,
