@@ -159,10 +159,10 @@ const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: R
   }
 
   await api.dataset.predicted?.seek(0);
-  const dataBatch = await api.dataset.predicted?.nextBatch(1);
+  const dataBatch = await api.dataset.predicted?.nextBatch(-1);
   const meta = await api.dataset.getDatasetMeta();
-
-  if (!(dataBatch?.length === 1)) {
+  dataBatch?.push(dataBatch[0]);
+  if (!dataBatch) {
     throw new TypeError('no data');
   }
 
@@ -171,34 +171,50 @@ const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: R
   const [output_0, output_1] = result as tf.Tensor[];
   const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, 1);
   const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, 1);
-  const outputs = yolo_nms([box0.slice(0, 3) as any, box1.slice(0, 3) as any]);
-  const {
-    boxes,
-    scores,
-    classes,
-    valid_detections
-  } = outputs;
-  const predictResult = [];
-  for (let i = 0; i < valid_detections; i++) {
-    let boxArr = Array.from(tf.reshape(tf.slice(boxes, [0, i], [1, 1]), [4]).dataSync());
-    const scoresArr = tf.reshape(tf.slice(scores, [0, i], [1, 1]), [1]).dataSync();
-    const x = meta?.dimension.x as number;
-    const y = meta?.dimension.y as number;
-    const ratioX = dataBatch[0].data.originSize.width / x;
-    const ratioY = dataBatch[0].data.originSize.height / y
-    boxArr = [
-      boxArr[0] * x * ratioX,
-      boxArr[1] * y * ratioY,
-      (boxArr[2] - boxArr[0]) * x * ratioX,
-      (boxArr[3] - boxArr[1]) * y * ratioY
-    ]
-    predictResult.push({
-      class: categories[tf.reshape(tf.slice(classes, [0, i], [1, 1]), [1]).dataSync()[0]],
-      score: scoresArr[0],
-      box: boxArr
+
+
+  const finalResult = [];
+  for (let i = 0; i < output_0.shape[0]; i++) {
+    const curbox0 = box0.slice(0, 3).map((box: tf.Tensor) => {
+      return tf.slice(box, [i], [1]);
     });
+    const curbox1 = box1.slice(0, 3).map((box: tf.Tensor) => {
+      return tf.slice(box, [i], [1]);
+    });
+    const outputs = yolo_nms([curbox0, curbox1]);
+    const {
+      boxes,
+      scores,
+      classes,
+      valid_detections
+    } = outputs;
+    const predictResult = [];
+    for (let i = 0; i < valid_detections; i++) {
+      let boxArr = Array.from(tf.reshape(tf.slice(boxes, [0, i], [1, 1]), [4]).dataSync());
+      const scoresArr = tf.reshape(tf.slice(scores, [0, i], [1, 1]), [1]).dataSync();
+      const x = meta?.dimension.x as number;
+      const y = meta?.dimension.y as number;
+      const ratioX = dataBatch[0].data.originSize.width / x;
+      const ratioY = dataBatch[0].data.originSize.height / y
+      boxArr = [
+        boxArr[0] * x * ratioX,
+        boxArr[1] * y * ratioY,
+        (boxArr[2] - boxArr[0]) * x * ratioX,
+        (boxArr[3] - boxArr[1]) * y * ratioY
+      ]
+      const id = tf.reshape(tf.slice(classes, [0, i], [1, 1]), [1]).dataSync()[0];
+      predictResult.push({
+        class: {
+          id,
+          categorie: categories[id]
+        },
+        score: scoresArr[0],
+        box: boxArr
+      });
+    }
+    finalResult.push(predictResult)
   }
-  return predictResult;
+  return finalResult;
 }
 
 export {

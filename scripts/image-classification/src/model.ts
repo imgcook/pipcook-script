@@ -1,4 +1,6 @@
-import { ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
+import { ModelEntry, Runtime, ScriptContext, PredictResult } from '@pipcook/core';
+import * as path from 'path';
+import * as fs from 'fs-extra';
 import { TransedSample, TransedMetadata } from './types';
 import * as tf from '@tensorflow/tfjs-node';
 
@@ -28,7 +30,10 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
   modelUrl = defaultWeightsMap[modelUrl] || modelUrl;
   const categories = meta.categories;
   const inputShape = meta.dimension;
-  const NUM_CLASSES = categories.length;
+  if (!Array.isArray(categories)) {
+    throw new TypeError('categorie is not found');
+  }
+  const NUM_CLASSES = categories?.length;
   // @ts-ignore
   let model: tf.LayersModel | null = null;
   // @ts-ignore
@@ -99,7 +104,7 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
       // @ts-ignore
       const xs = tf.tidy(() => tf.stack(dataBatch.map((ele) => ele.data)));
       // @ts-ignore
-      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(ele.label, meta.categories.length))));
+      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(meta.categories?.indexOf(ele.label), meta.categories.length))));
       const trainRes = await model.trainOnBatch(xs, ys) as number[];
       tf.dispose(xs);
       tf.dispose(ys);
@@ -112,15 +117,54 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
     }
   }
   await model.save(`file://${modelDir}`);
+  await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
 }
 
-const main: ModelEntry<TransedSample, TransedMetadata> = async (api: Runtime<TransedSample, TransedMetadata>, options: Record<string, any>, context: ScriptContext) => {
+const train: ModelEntry<TransedSample, TransedMetadata> = async (api: Runtime<TransedSample, TransedMetadata>, options: Record<string, any>, context: ScriptContext) => {
   const { modelDir } = context.workspace;
   const meta = await api.dataset.getDatasetMeta();
-
+  if (!meta) {
+    throw new TypeError('meta is not found');
+  }
   const model = await constructModel(options, meta);
   // @ts-ignore
   await trainModel(options, modelDir, model, api.dataset, tf);
 }
 
-export default main;
+let predictModel: tf.LayersModel;
+let categories: string[];
+
+const predict = async (api: Runtime<TransedSample, TransedMetadata>, options: Record<string, any>, context: ScriptContext): Promise<PredictResult> => {
+  const { modelDir } = context.workspace;
+
+  if (!categories) {
+    categories = await fs.readJSON(path.join(modelDir, 'categories.json'));
+  }
+  if (!predictModel) {
+    predictModel = await tf.loadLayersModel(`file://${path.join(modelDir, 'model.json')}`);
+  }
+
+  await api.dataset.predicted?.seek(0);
+  const dataBatch = await api.dataset.predicted?.nextBatch(-1);
+
+  if (!dataBatch) {
+    throw new TypeError('wrong data');
+  }
+
+  const tensors = tf.stack(dataBatch.map(ele => ele.data));
+  const result = predictModel.predict(tensors) as tf.Tensor;
+  const argMax = tf.argMax(result, 1);
+  const ids = Array.from(argMax.dataSync());
+  return ids.map((id: number) => {
+    return {
+      id,
+      category: categories[id],
+      score: result.dataSync()[id]
+    }
+  })
+}
+
+export {
+  train,
+  predict
+}

@@ -19,7 +19,7 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
     ImageDatasetMeta
   >({
     transform: async (sample: DatasetPool.Types.ObjectDetection.Sample): Promise<TransedSample> => {
-      if (!sample.data.uri && sample.data.buffer) {
+      if (!sample.data.uri && !sample.data.buffer) {
         throw new TypeError('sample data is empty');
       }
       const originImage = await DataCook.Image.read(sample.data.uri as string || sample.data.buffer as ArrayBuffer);
@@ -28,15 +28,18 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
       const ratioX = parsedX / originWidth;
       const ratioY = parsedY / originHeight;
       const resized = originImage.resize(parsedX, parsedY);
-      const labels = JSON.parse(JSON.stringify(sample.label));
-      for (const curLabel of labels) {
-        curLabel.bbox = [
-          curLabel.bbox[0] * ratioX,
-          curLabel.bbox[1] * ratioY,
-          curLabel.bbox[2] * ratioX,
-          curLabel.bbox[3] * ratioY
-        ]
+      const labels = sample.label;
+      if (labels) {
+        for (const curLabel of labels) {
+          curLabel.bbox = [
+            curLabel.bbox[0] * ratioX,
+            curLabel.bbox[1] * ratioY,
+            curLabel.bbox[2] * ratioX,
+            curLabel.bbox[3] * ratioY
+          ];
+        }
       }
+
       return {
         data: {
           tensor: resized.toTensor(),
@@ -59,8 +62,6 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
       };
     }
   }, dataset);
-
-  return datasets;
 }
 
 /**
