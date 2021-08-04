@@ -1,11 +1,11 @@
-import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+import { DataCook, DataflowEntry, DatasetPool } from '@pipcook/core';
 import { TransedSample as OUT_SAMPLE, TransedMetadata as OUT_META } from './types';
 
 import IN_SAMPLE = DataCook.Dataset.Types.ImageClassification.Sample;
 import IN_META = DatasetPool.Types.ImageClassification.DatasetMeta;
 
 const resizeEntry: DataflowEntry<IN_SAMPLE, IN_META, OUT_SAMPLE, OUT_META> =
-  async (dataset: DatasetPool.Types.ImageClassification.DatasetPool, options: Record<string, any>, _: ScriptContext): Promise<DatasetPool.Types.DatasetPool<OUT_SAMPLE, OUT_META>> => {
+  async (dataset, options, _): Promise<DatasetPool.Types.DatasetPool<OUT_SAMPLE, OUT_META>> => {
   const [ x = '-1', y = '-1' ] = options['size'];
   const { normalize = false } = options;
 
