@@ -1,4 +1,4 @@
-import { ModelEntry, PredictResult, PredictEntry } from '@pipcook/core';
+import { ModelEntry, PredictResult, PredictEntry, DatasetPool } from '@pipcook/core';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { TransedSample, TransedMetadata } from './types';
@@ -19,7 +19,6 @@ const defaultWeightsMap: {[key: string]: string} = {
 */
 async function constructModel(options: Record<string, any>, meta: TransedMetadata) {
   let {
-    // @ts-ignore
     optimizer = tf.train.adam(),
     loss = 'categoricalCrossentropy',
     metrics = [ 'accuracy' ],
@@ -78,26 +77,32 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
  * @param batchSize : need to specify batch size
  * @param optimizer : need to specify optimizer
  */
-// @ts-ignore
- async function trainModel(options: Record<string, any>, modelDir: string, model: tf.LayersModel, dataset: DataSourceApi<Image>) {
+ async function trainModel(options: Record<string, any>, modelDir: string, model: tf.LayersModel, dataset: DatasetPool.Types.DatasetPool<TransedSample, TransedMetadata>) {
   const {
     epochs = 10,
     batchSize = 16
   } = options;
-  await dataset.shuffle();
-  const { size } = await dataset.getDatasetMeta();
-  const { train: trainSize } = size;
-  const batchesPerEpoch = Math.floor(trainSize / batchSize);
+  dataset.shuffle();
   const meta = await dataset.getDatasetMeta();
+  if (!meta) {
+    throw new TypeError('DatasetMeta cannot be null.');
+  }
+  if (!meta.categories) {
+    throw new TypeError('Categories cannot be null.');
+  }
+  if (!dataset.train) {
+    throw new TypeError('Train dataset cannot be null.');
+  }
+  const { size, categories } = meta;
+  const { train: trainSize = 0 } = size || {};
+  const batchesPerEpoch = Math.floor(trainSize / batchSize);
   for (let i = 0; i < epochs; i++) {
     console.log(`Epoch ${i}/${epochs} start`);
     await dataset.train.seek(0);
     for (let j = 0; j < batchesPerEpoch; j++) {
       const dataBatch = await dataset.train.nextBatch(batchSize);
-      // @ts-ignore
       const xs = tf.tidy(() => tf.stack(dataBatch.map((ele) => ele.data)));
-      // @ts-ignore
-      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(meta.categories?.indexOf(ele.label), meta.categories.length))));
+      const ys = tf.tidy(() => tf.stack(dataBatch.map((ele) => tf.oneHot(categories.indexOf(ele.label), categories.length))));
       const trainRes = await model.trainOnBatch(xs, ys) as number[];
       tf.dispose(xs);
       tf.dispose(ys);
@@ -109,8 +114,8 @@ async function constructModel(options: Record<string, any>, meta: TransedMetadat
       }
     }
   }
-  await model.save(`file://${modelDir}`);
   await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
+  await model.save(`file://${modelDir}`);
 }
 
 const train: ModelEntry<TransedSample, TransedMetadata> = async (api, options, context) => {
@@ -120,8 +125,7 @@ const train: ModelEntry<TransedSample, TransedMetadata> = async (api, options, c
     throw new TypeError('meta is not found');
   }
   const model = await constructModel(options, meta);
-  // @ts-ignore
-  await trainModel(options, modelDir, model, api.dataset, tf);
+  await trainModel(options, modelDir, model, api.dataset);
 }
 
 let predictModel: tf.LayersModel;

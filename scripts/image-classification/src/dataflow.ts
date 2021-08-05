@@ -36,7 +36,7 @@ const resizeEntry: DataflowEntry<IN_SAMPLE, IN_META, OUT_SAMPLE, OUT_META> =
   dataset.valid?.seek(0);
   dataset.predicted?.seek(0);
 
-  return dataset.transform({
+  const v = dataset.transform({
     transform: async (sample): Promise<OUT_SAMPLE> => {
       if (!sample.data.uri && !sample.data.buffer) {
         throw new TypeError('Invalid sample.');
@@ -70,6 +70,8 @@ const resizeEntry: DataflowEntry<IN_SAMPLE, IN_META, OUT_SAMPLE, OUT_META> =
       };
     }
   });
+  console.log('vvvvv', v);
+  return v;
 }
 
 /**

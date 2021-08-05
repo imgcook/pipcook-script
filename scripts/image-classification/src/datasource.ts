@@ -89,7 +89,6 @@ const imageClassDataCollect: DatasourceEntry<DataCook.Dataset.Types.ImageClassif
       });
     }
   }
-
   return DatasetPool.makeImageClassificationDatasetFromList({
     train,
     test,
