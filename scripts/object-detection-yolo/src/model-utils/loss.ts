@@ -1,21 +1,56 @@
 import { booleanMask, broadcastTo, sparseCategoricalCrossentropy } from './utils';
-declare global {
-  var tf: any
-}
+import * as tf from '@tensorflow/tfjs-node';
 
 function _meshgrid(n_a: number, n_b: number) {
   const repeatTensor = [];
-  for (let i = 0; i < n_a; i++) {
-    repeatTensor.push(tf.range(0, n_b));
+  for (let i = 0; i < n_b; i++) {
+    repeatTensor.push(...new Array(n_a).fill(i));
   }
 
   return [
     tf.reshape(tf.tile(tf.range(0, n_a), [n_b]), [n_b, n_a]),
-    tf.reshape(tf.stack(repeatTensor), [n_b, n_a])
+    tf.reshape(tf.tensor(repeatTensor), [n_b, n_a])
  ]
 }
 
-function yolo_boxes(pred: any, anchors: any, classes: number): any {
+export function yolo_nms(outputs: tf.Tensor[][]) {
+  const b: tf.Tensor[] = [], c: tf.Tensor[] = [], t: tf.Tensor[] = [];
+  for (const o of outputs) {
+    b.push(tf.reshape(o[0], [o[0].shape[0], -1, o[0].shape[o[0].shape.length - 1]]));
+    c.push(tf.reshape(o[1], [o[1].shape[0], -1, o[1].shape[o[1].shape.length - 1]]));
+    t.push(tf.reshape(o[2], [o[2].shape[0], -1, o[2].shape[o[2].shape.length - 1]]));
+  }  
+
+  let bbox = tf.concat(b, 1);
+  const confidence = tf.concat(c, 1);
+  const class_probs = tf.concat(t, 1);
+  let scores = tf.mul(confidence, class_probs);
+  const dscores = tf.squeeze(scores, [0]);
+  scores = tf.max(dscores, [1]);
+  bbox = tf.reshape(bbox, [-1, 4]);
+  let classes = tf.argMax(dscores, 1);
+  const nonMaxScores = tf.image.nonMaxSuppressionWithScore(bbox as tf.Tensor2D, scores as tf.Tensor1D, 8, 0.5, 0.5);
+  let { selectedIndices, selectedScores } = nonMaxScores;
+  const num_valid_nms_boxes = selectedIndices.shape[0];
+  selectedIndices = tf.concat([selectedIndices, tf.zeros([8 - num_valid_nms_boxes], 'int32')], 0);
+  selectedScores = tf.concat([selectedScores, tf.zeros([8 - num_valid_nms_boxes], 'float32')], -1);
+  let boxes = tf.gather(bbox, selectedIndices)
+  boxes = tf.expandDims(boxes, 0);
+  scores=selectedScores;
+  scores = tf.expandDims(scores, 0);
+  classes = tf.gather(classes, selectedIndices);
+  classes = tf.expandDims(classes, 0);
+  let valid_detections = num_valid_nms_boxes;
+  return {
+    boxes,
+    scores,
+    classes,
+    valid_detections
+  }
+
+}
+
+export function yolo_boxes(pred: any, anchors: any, classes: number): any {
   const gridSize = pred.shape.slice(1, 3);
   let [ box_xy, box_wh, objectness, class_probs ] = tf.split(pred, [2, 2, 1, classes], -1);
   box_xy = tf.sigmoid(box_xy);
@@ -95,8 +130,8 @@ export function lossWrap (anchors: any, classes: number, ignore_thresh=0.5) {
       let true_xy = tf.div(tf.add(trueBox02, trueBox24), 2);
       let true_wh = tf.sub(trueBox24, trueBox02);
   
-      const true_wh0 = true_wh.slice([0,0,0,0,0], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
-      const true_wh1 = true_wh.slice([0,0,0,0,1], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
+      const true_wh0 = (true_wh as any).slice([0,0,0,0,0], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
+      const true_wh1 = (true_wh as any).slice([0,0,0,0,1], [-1,-1,-1,-1,1]).reshape(true_wh.shape.slice(0, 4));
       const box_loss_scale = tf.sub(2, tf.mul(true_wh0, true_wh1));
   
       const grid_size = yTrue.shape[1] as number;
@@ -112,7 +147,7 @@ export function lossWrap (anchors: any, classes: number, ignore_thresh=0.5) {
       for (let i = 0; i < pred_box.shape[0]; i++) {
         const cur_pred_box = pred_box.slice([i], [1]).reshape(pred_box.shape.slice(1));
         const cur_true_box = true_box.slice([i], [1]).reshape(true_box.shape.slice(1));
-        const cur_obj_mask = obj_mask.slice([i], [1]).reshape(obj_mask.shape.slice(1));
+        const cur_obj_mask = (obj_mask as any).slice([i], [1]).reshape(obj_mask.shape.slice(1));
         const boolean_mask = broadcast_iou(cur_pred_box ,booleanMask(cur_true_box, tf.cast(cur_obj_mask, 'bool')));
         const reduceMax = tf.max(boolean_mask, -1);
         best_iou_arr.push(reduceMax);

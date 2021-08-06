@@ -7,15 +7,17 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run clean && npm run pack",
+    "build": " npm run clean && npm run compile && npm run pack",
     "pack": "webpack --config webpack.config.js",
-    "clean": "rm -rf ./dist && rm -rf tsconfig.tsbuildinfo"
+    "clean": "rm -rf ./dist && rm -rf tsconfig.tsbuildinfo",
+    "compile": "tsc -b tsconfig.json"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pipcook/core": "^2.0.0-rc.4",
-    "@pipcook/datacook": "0.0.8",
+    "@tensorflow/tfjs-core": "^3.8.0",
+    "@tensorflow/tfjs-node": "^3.8.0",
+    "@pipcook/core": "^2.0.0",
     "fs-extra": "^8.1.0",
     "glob-promise": "^4.1.0",
     "pipcook-downloader": "^8.0.0"

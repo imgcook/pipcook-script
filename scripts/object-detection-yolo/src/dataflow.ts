@@ -1,39 +1,57 @@
-import { DataflowEntry, ScriptContext } from '@pipcook/core';
-import type * as Datacook from '@pipcook/datacook';
+import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+import { ImageDatasetMeta, TransedSample } from './types';
 
-//@ts-ignore
-const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.ImageDatasetMeta> =
-  async (dataset: Datacook.Dataset.Types.Dataset<Datacook.Dataset.Types.Sample, any>, options: Record<string, any>, context: ScriptContext)  => {
+const resizeEntry: DataflowEntry<
+  DatasetPool.Types.ObjectDetection.Sample,
+  DatasetPool.Types.ObjectDetection.DatasetMeta,
+  TransedSample,
+  ImageDatasetMeta
+> = async (datasetPool, options, _) => {
   const [ x = '-1', y = '-1' ] = options['size'];
 
   const parsedX = parseInt(x);
   const parsedY = parseInt(y);
-  if (parsedX == -1 || parsedY == -1) return;
-  const datasets = await context.dataCook.Dataset.transformDataset<Datacook.Dataset.Types.ImageDatasetMeta, Datacook.Dataset.Types.Sample>({
-    next: async (sample) => {
-      const originImage = await context.dataCook.Image.read(sample.data.url as string);
+  if (parsedX == -1 || parsedY == -1) {
+    throw new TypeError('Paremeter `size` is invlaid.');
+  }
+  return datasetPool.transform({
+    transform: async (sample): Promise<TransedSample> => {
+      if (!sample.data.uri && !sample.data.buffer) {
+        throw new TypeError('sample data is empty');
+      }
+      const originImage = await DataCook.Image.read(sample.data.uri as string || sample.data.buffer as ArrayBuffer);
       const originWidth = originImage.width;
       const originHeight = originImage.height;
       const ratioX = parsedX / originWidth;
       const ratioY = parsedY / originHeight;
       const resized = originImage.resize(parsedX, parsedY);
-      const labels = JSON.parse(JSON.stringify(sample.label));
-      for (const curLabel of labels) {
-        curLabel.bbox = [
-          curLabel.bbox[0] * ratioX,
-          curLabel.bbox[1] * ratioY,
-          curLabel.bbox[2] * ratioX,
-          curLabel.bbox[3] * ratioY
-        ]
+      const labels = sample.label;
+      if (labels) {
+        for (const curLabel of labels) {
+          curLabel.bbox = [
+            curLabel.bbox[0] * ratioX,
+            curLabel.bbox[1] * ratioY,
+            curLabel.bbox[2] * ratioX,
+            curLabel.bbox[3] * ratioY
+          ];
+        }
       }
+
       return {
-        data: resized.toTensor(),
-        label: labels,
-      }
+        data: {
+          tensor: resized.toTensor(),
+          originSize: {
+            width: originWidth,
+            height: originHeight
+          }
+        },
+        label: labels
+      };
     },
-    metadata: async (meta) => {
+    metadata: async (meta): Promise<ImageDatasetMeta> => {
       return {
         ...meta,
+        type: DataCook.Dataset.Types.DatasetType.Image,
         dimension: {
           x: parsedX,
           y: parsedY,
@@ -41,9 +59,7 @@ const resizeEntry: DataflowEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset
         }
       };
     }
-  }, dataset);
-
-  return datasets;
+  });
 }
 
 /**

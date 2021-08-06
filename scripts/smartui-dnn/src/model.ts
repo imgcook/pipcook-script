@@ -1,5 +1,5 @@
-import { ModelEntry, Runtime, ScriptContext } from '@pipcook/core';
-import type { Dataset } from '@pipcook/datacook';
+import { ModelEntry, Runtime, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
+import Dataset = DataCook.Dataset;
 
 function createModel(featureNumbers: number, tf: any) {
   const model = tf.sequential();
@@ -25,7 +25,7 @@ function createModel(featureNumbers: number, tf: any) {
   return model;
 }
 
-const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.TableDatasetMeta> = async (api: Runtime<Dataset.Types.Sample, Dataset.Types.TableDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
+const main: ModelEntry<Dataset.Types.Sample, DatasetPool.Types.TableDatasetMeta> = async (api, options: Record<string, any>, context: ScriptContext) => {
   const { modelDir } = context.workspace;
   const {
     epochs = 10,
@@ -36,6 +36,9 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.TableDatasetMeta> = a
     tf = await context.importJS('@tensorflow/tfjs-node-gpu');
   } catch {
     tf = await context.importJS('@tensorflow/tfjs-node');
+  }
+  if (!api.dataset.train) {
+    throw new TypeError('No train data found.');
   }
   const meta = await api.dataset.getDatasetMeta();
   const featureNumbers = meta?.dataKeys?.length as number;
@@ -52,9 +55,9 @@ const main: ModelEntry<Dataset.Types.Sample, Dataset.Types.TableDatasetMeta> = a
     await api.dataset.train.seek(0);
     let j = 0;
     while(true) {
-      let batch = await api.dataset.train.nextBatch(batchSize);
+      let batch = await api.dataset.train?.nextBatch(batchSize);
       batch = batch.filter((ele: any) => (ele.label !== undefined && ele.label !== null));
-      if (!(batch?.length > 0)) {
+      if (!(batch.length > 0)) {
         break;
       }
       const xs = tf.tidy(() => tf.stack(batch.map((ele) => ele.data)));

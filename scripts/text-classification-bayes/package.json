@@ -17,12 +17,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pipcook/pipcook-core": "^2.0.0-beta.1",
+    "@pipcook/core": "^2.0.0",
     "fs-extra": "^9.1.0",
     "lodash": "^4.17.21",
     "csv-parse": "^4.8.8",
     "csv-stringify": "^5.3.6",
-    "glob-promise": "^3.4.0"
+    "glob-promise": "^3.4.0",
+    "pipcook-downloader": "^8.0.0"
   },
   "gitHead": "53e131a069b3112a74ae5d99aa1ab08bec768c7e",
   "devDependencies": {

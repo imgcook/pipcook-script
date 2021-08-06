@@ -3,10 +3,9 @@
  * the data is conform to expectation.
  */
 
- import { DatasourceEntry, ScriptContext } from '@pipcook/core';
- import * as Datacook from '@pipcook/datacook';
-
-function transformRecord(record: any, schemas: Datacook.Dataset.Types.TableSchema, data: string[], label: string) {
+ import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+ 
+function transformRecord(record: any, schemas: DataCook.Dataset.Types.TableSchema, data: string[], label: string) {
   const obj: any = {
     data: []
   };
@@ -20,16 +19,16 @@ function transformRecord(record: any, schemas: Datacook.Dataset.Types.TableSchem
   return obj;
 }
 
-class DataAccessorImpl<T extends Datacook.Dataset.Types.Sample> implements Datacook.Dataset.Types.DataAccessor<T> {
+class DataAccessorImpl<T extends DataCook.Dataset.Types.Sample> implements DataCook.Dataset.Types.Dataset<T> {
   reader: any;
   boa: any;
-  schema: Datacook.Dataset.Types.TableSchema;
+  schema: DataCook.Dataset.Types.TableSchema;
   table: string;
   client: any;
   data: string[];
   label: string;
 
-  constructor(table: string, client: any, boa: any, schema: Datacook.Dataset.Types.TableSchema, data: string[], label: string) {
+  constructor(table: string, client: any, boa: any, schema: DataCook.Dataset.Types.TableSchema, data: string[], label: string) {
     const reader = client.read_table(table);
     this.table = table;
     this.client = client;
@@ -79,48 +78,16 @@ class DataAccessorImpl<T extends Datacook.Dataset.Types.Sample> implements Datac
     }
     return ret;
   }
+
   async seek(offset: number): Promise<void> {
     if (offset === 0) {
       const reader = this.client.read_table(this.table);
       this.reader = reader;
     }
   }
-
 }
 
-class DatasetImpl<T extends Datacook.Dataset.Types.Sample, D extends Datacook.Dataset.Types.TableDatasetMeta> implements Datacook.Dataset.Types.Dataset<T, D>{
-  dataKeys: string[] = [];
-  schema: Datacook.Dataset.Types.TableSchema = [];
-  train: DataAccessorImpl<T>;
-  test: DataAccessorImpl<T>;
-  
-  constructor(data: string[], schema: Datacook.Dataset.Types.TableSchema, train: DataAccessorImpl<T>) {
-    this.dataKeys = data;
-    this.schema = schema;
-    this.train = train;
-    this.test = train;
-  }
-
-  //@ts-ignore
-  async getDatasetMeta() {
-    return {
-      dataKeys: this.dataKeys,
-      tableSchema: this.schema,
-      type: Datacook.Dataset.Types.DatasetType.Table,
-      size: {
-        train: -1,
-        test: -1
-      },
-      labelMap: {}
-    }
-  }
-
-  shuffle() {
-    console.warn('shuffle is not implemented in table reader');
-  }
-}
-
-const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.Dataset.Types.TableDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
+const OdpsDataCollect: DatasourceEntry<DataCook.Dataset.Types.Sample, DatasetPool.Types.TableDatasetMeta> = async (options: Record<string, any>, context: ScriptContext) => {
   let {
     project,
     table,
@@ -144,7 +111,7 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
   const tableClient = client.get_table(table);
 
   // get table schema
-  const schema: Datacook.Dataset.Types.TableSchema = [];
+  const schema: DataCook.Dataset.Types.TableSchema = [];
 
   const columns = tableClient.schema.columns;
   for (let i = 0; i < len(columns); i++) {
@@ -157,7 +124,22 @@ const OdpsDataCollect: DatasourceEntry<Datacook.Dataset.Types.Sample, Datacook.D
   if (data[0] === '*') {
     data = schema.map(ele => ele.name).filter(ele => ele !== label);
   }
-  return new DatasetImpl(data, schema, new DataAccessorImpl(table, client, boa, schema, data, label));
+  const train = new DataAccessorImpl(table, client, boa, schema, data, label);
+  const test = train;
+  return DatasetPool.ArrayDatasetPoolImpl.from({
+    train,
+    test
+  }, {
+    dataKeys: data,
+    tableSchema: schema,
+    type: DataCook.Dataset.Types.DatasetType.Table,
+    size: {
+      train: 0,
+      test: 0,
+      valid: 0,
+      predicted: 0
+    }
+  });
 };
  
 export default OdpsDataCollect;
