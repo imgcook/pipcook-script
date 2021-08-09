@@ -24,7 +24,8 @@ module.exports = {
     libraryTarget: 'umd'
   },
   externals: {
-    '@pipocook/datacook': 'commonjs2 @pipcook/datacook'
+    '@pipcook/boa': 'commonjs2 @pipcook/boa',
+    '@pipcook/datacook': 'commonjs2 @pipcook/datacook'
   },
   mode: 'development'
 };
