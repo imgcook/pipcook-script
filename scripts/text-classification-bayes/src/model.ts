@@ -79,6 +79,7 @@ const modelTrain = async (runtime: Runtime<Types.Sample, DatasetPool.Types.Objec
 
 const main: ModelEntry<Types.Sample, DatasetPool.Types.ObjectDetectionDatasetMeta>
   = async (runtime, options, context) => {
+  boa.setenv(path.join(context.workspace.frameworkDir, 'site-packages'));
   let model = await modelDefine(options, context);
   model = await modelTrain(runtime, options, context, model);
 };
