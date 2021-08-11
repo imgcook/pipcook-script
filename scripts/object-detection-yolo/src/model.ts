@@ -175,8 +175,8 @@ const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, co
   const tensors = tf.stack(dataBatch.map(ele => ele.data.tensor));
   const result = predictModel.predict(tensors);
   const [output_0, output_1] = result as tf.Tensor[];
-  const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, 1);
-  const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, 1);
+  const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, categories.length);
+  const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, categories.length);
 
 
   const finalResult = [];
