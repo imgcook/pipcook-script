@@ -70,7 +70,8 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
   const { modelDir } = context.workspace;
   const {
     epochs = 20,
-    batchSize = 16
+    batchSize = 16,
+    patience = 10
   } = options;
 
   const dataset = await checkTrainDatasetPool(api.dataset);
@@ -144,7 +145,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
     batchesPerEpoch,
     epochs: epochs,
     callbacks: [
-      tf.callbacks.earlyStopping({monitor: 'loss', patience: 3, verbose: 1}),
+      tf.callbacks.earlyStopping({monitor: 'loss', patience: parseInt(patience, 10), verbose: 1}),
       tf.node.tensorBoard(`${modelDir}/tensorboard`)
     ]
   })
@@ -175,8 +176,8 @@ const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, co
   const tensors = tf.stack(dataBatch.map(ele => ele.data.tensor));
   const result = predictModel.predict(tensors);
   const [output_0, output_1] = result as tf.Tensor[];
-  const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, 1);
-  const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, 1);
+  const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, categories.length);
+  const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, categories.length);
 
 
   const finalResult = [];
