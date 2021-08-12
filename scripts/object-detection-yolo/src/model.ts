@@ -136,23 +136,44 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
     return iterator;
   }
   let ds = tf.data.generator(makeIterator as any).batch(batchSize).mapAsync(async (data: any) => {
-    const ys = await transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416);
+    const ys = tf.tidy(() => transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416));
     return {
       xs: data.xs,
       ys
     }
   });
 
+  let minLoss = Number.MAX_SAFE_INTEGER;
+  await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
   await model.fitDataset(ds, {
     batchesPerEpoch,
     epochs: epochs,
     callbacks: [
       tf.callbacks.earlyStopping({monitor: 'loss', patience: parseInt(patience, 10), verbose: 1}),
-      tf.node.tensorBoard(`${modelDir}/tensorboard`)
+      tf.node.tensorBoard(`${modelDir}/tensorboard`),
+      {
+        onBatchEnd: () => {},
+        setParams: () => {},
+        setModel: () => {},
+        onEpochBegin: () => {},
+        onEpochEnd: async (epoch: number, logs: {
+          loss: number
+        }) => {
+          if (logs.loss < minLoss) {
+            minLoss = logs.loss;
+            console.log('current epoch produces better model, will save it');
+            await model.save(`file://${modelDir}`);
+          }
+        },
+        onBatchBegin: () => {},
+        onTrainBegin: () => {},
+        onTrainEnd: () => {},
+      } as any
     ]
-  })
+  });
+
   await model.save(`file://${modelDir}`);
-  await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
+  
 }
 
 let predictModel: tf.LayersModel;
