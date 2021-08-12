@@ -7,35 +7,40 @@ export async function transformTargets(y_train: any, anchors: any, size: number)
   const y_outs = [];
   let grid_size = Math.floor(size / 32);
 
-  anchors = tf.cast(anchors, 'float32');
-  let anchor_area = tf.mul(
-    getLastIndex(anchors, 0),
-    getLastIndex(anchors, 1)
-  );
-  let box_wh = tf.sub(
-    y_train.slice([0, 0, 2], [-1, -1, 2]),
-    y_train.slice([0, 0, 0], [-1, -1, 2]),
-  );
-  box_wh = tf.tile(tf.expandDims(box_wh, -2), [1, 1, anchors.shape[0], 1]);
-  let box_area = tf.mul(
-    getLastIndex(box_wh, 0),
-    getLastIndex(box_wh, 1)
-  );
-  let intersection = tf.mul(tf.minimum(
-    getLastIndex(box_wh, 0),
-    getLastIndex(anchors, 0)
-  ), tf.minimum(
-    getLastIndex(box_wh, 1),
-    getLastIndex(anchors, 1)
-  ));
-  let iou = tf.div(
-    intersection,
-    tf.sub(tf.add(box_area, anchor_area), intersection)
-  );
-  let anchor_idx = tf.cast(tf.argMax(iou, -1), 'float32');
-  anchor_idx = tf.expandDims(anchor_idx, -1);
+  
 
-  y_train = tf.concat([y_train, anchor_idx], -1);
+  y_train = tf.tidy(() => {
+    anchors = tf.cast(anchors, 'float32');
+    let anchor_area = tf.mul(
+      getLastIndex(anchors, 0),
+      getLastIndex(anchors, 1)
+    );
+    let box_wh = tf.sub(
+      y_train.slice([0, 0, 2], [-1, -1, 2]),
+      y_train.slice([0, 0, 0], [-1, -1, 2]),
+    );
+    box_wh = tf.tile(tf.expandDims(box_wh, -2), [1, 1, anchors.shape[0], 1]);
+    let box_area = tf.mul(
+      getLastIndex(box_wh, 0),
+      getLastIndex(box_wh, 1)
+    );
+    let intersection = tf.mul(tf.minimum(
+      getLastIndex(box_wh, 0),
+      getLastIndex(anchors, 0)
+    ), tf.minimum(
+      getLastIndex(box_wh, 1),
+      getLastIndex(anchors, 1)
+    ));
+    let iou = tf.div(
+      intersection,
+      tf.sub(tf.add(box_area, anchor_area), intersection)
+    );
+    let anchor_idx = tf.cast(tf.argMax(iou, -1), 'float32');
+    anchor_idx = tf.expandDims(anchor_idx, -1);
+  
+    y_train = tf.concat([y_train, anchor_idx], -1);
+    return y_train;
+  })
 
   for (const anchor_idxs of getConstants().yolo_tiny_anchor_masks) {
     y_outs.push(

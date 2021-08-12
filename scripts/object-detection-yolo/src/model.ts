@@ -118,17 +118,19 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
             throw new TypeError('Read sample error.');
           }
         }
-        const bboxes = data.label.map((ele2) => ele2.bbox);
-        const labels = data.label.map((ele2) => meta.categories?.indexOf(ele2.name)) as number[];
-        const transedBboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
-        const ys = tf.tensor(transedBboxes);
-        return {
-          value: {
-            xs: data?.data.tensor,
-            ys
-          },
-          done: false
-        }
+        return tf.tidy(() => {
+          const bboxes = (data as TransedSample).label.map((ele2) => ele2.bbox);
+          const labels = (data as TransedSample).label.map((ele2) => meta.categories?.indexOf(ele2.name)) as number[];
+          const transedBboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
+          const ys = tf.tensor(transedBboxes);
+          return {
+            value: {
+              xs: data?.data.tensor,
+              ys
+            },
+            done: false
+          }
+        })
       }
     };
     return iterator;
