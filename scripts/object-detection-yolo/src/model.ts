@@ -21,9 +21,9 @@ function transformBBox(bboxes: number[][], width: number, height: number, labelI
     box[3] = box[3] / height;
     box[4] = labelIds[index2];
   });
-  bboxes = bboxes.slice(0, 8);
-  if (bboxes.length < 8) {
-    bboxes = bboxes.concat(new Array(8 - bboxes.length).fill([0,0,0,0,0]));
+  bboxes = bboxes.slice(0, 16);
+  if (bboxes.length < 16) {
+    bboxes = bboxes.concat(new Array(16 - bboxes.length).fill([0,0,0,0,0]));
   }
   return bboxes;
 }
