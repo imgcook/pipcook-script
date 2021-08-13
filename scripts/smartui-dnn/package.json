@@ -34,8 +34,9 @@
     "nyc": "14.1.1"
   },
   "dependencies": {
-    "@pipcook/core": "^2.0.0-rc.3",
-    "@pipcook/datacook": "^0.0.8",
+    "@pipcook/boa": "^2.1.0",
+    "@pipcook/core": "^2.0.0",
+    "@tensorflow/tfjs-node": "^3.8.0",
     "glob-promise": "^4.1.0"
   },
   "publishConfig": {
