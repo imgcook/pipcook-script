@@ -48,14 +48,13 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
 
   assert.ok(url, 'Please specify the url of your dataset');
 
-  const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
-  const extention = fileName.split('.');
- 
   let targetPath: string;
   if (/^file:\/\/.*/.test(url)) {
     targetPath = url.substring(7);
     await fs.copy(targetPath, dataDir);
   } else {
+    const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
+    const extention = fileName.split('.');
     assert.ok(extention[extention.length - 1] === 'zip', 'The dataset provided should be a zip file');
     console.log('downloading dataset ...');
     await download(url, dataDir, {
@@ -164,5 +163,5 @@ const objectDetectionDataSource: DatasourceEntry<
   const { format = 'coco' } = options;
   return format === 'pascalvoc' ? objectDetectionDataSourceFromPascalVoc(options, context) : objectDetectionDataSourceFromCoco(options, context);
 }
+
 export default objectDetectionDataSource;
- 
