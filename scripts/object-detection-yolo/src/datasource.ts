@@ -3,7 +3,7 @@
  * the data is conform to expectation.
  */
 
- import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+ import { DataCook, DatasourceEntry, DatasetPool } from '@pipcook/core';
  // @ts-ignore
  import download from 'pipcook-downloader';
  import * as fs from 'fs-extra';
@@ -22,11 +22,11 @@ function processCoco(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
 
 function processPascalVoc(data: DataCook.Dataset.Types.PascalVoc.Annotation[], imageFiles: string[], datasetPath: string) {
   data.forEach(ann => {
-      const imgPath = path.join(datasetPath, ann.annotation.path || path.join(ann.annotation.folder, ann.annotation.filename));
-      if (imageFiles.indexOf(imgPath) < 0) {
-        throw new TypeError(`image ${ann.annotation.filename || ann.annotation.path} is not found.`);
-      }
-      ann.annotation.path = imgPath;
+    const imgPath = path.join(datasetPath, ann.annotation.path || path.join(ann.annotation.folder, ann.annotation.filename));
+    if (imageFiles.indexOf(imgPath) < 0) {
+      throw new TypeError(`image ${ann.annotation.filename || ann.annotation.path} is not found.`);
+    }
+    ann.annotation.path = imgPath;
   });
 }
 
