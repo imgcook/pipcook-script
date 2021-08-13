@@ -20,7 +20,7 @@ module.exports = {
     extensions: [ '.ts', '.js' ]
   },
   externals: {
-    '@pipocook/core': 'commonjs2 @pipcook/core',
+    '@pipcook/core': 'commonjs2 @pipcook/core',
     '@tensorflow/tfjs-node': 'commonjs2 @tensorflow/tfjs-node',
     '@tensorflow/tfjs-node-gpu': 'commonjs2 @tensorflow/tfjs-node-gpu'
   },
