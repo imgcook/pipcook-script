@@ -21,9 +21,9 @@ function transformBBox(bboxes: number[][], width: number, height: number, labelI
     box[3] = box[3] / height;
     box[4] = labelIds[index2];
   });
-  bboxes = bboxes.slice(0, 8);
-  if (bboxes.length < 8) {
-    bboxes = bboxes.concat(new Array(8 - bboxes.length).fill([0,0,0,0,0]));
+  bboxes = bboxes.slice(0, 16);
+  if (bboxes.length < 16) {
+    bboxes = bboxes.concat(new Array(16 - bboxes.length).fill([0,0,0,0,0]));
   }
   return bboxes;
 }
@@ -118,39 +118,62 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
             throw new TypeError('Read sample error.');
           }
         }
-        const bboxes = data.label.map((ele2) => ele2.bbox);
-        const labels = data.label.map((ele2) => meta.categories?.indexOf(ele2.name)) as number[];
-        const transedBboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
-        const ys = tf.tensor(transedBboxes);
-        return {
-          value: {
-            xs: data?.data.tensor,
-            ys
-          },
-          done: false
-        }
+        return tf.tidy(() => {
+          const bboxes = (data as TransedSample).label.map((ele2) => ele2.bbox);
+          const labels = (data as TransedSample).label.map((ele2) => meta.categories?.indexOf(ele2.name)) as number[];
+          const transedBboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
+          const ys = tf.tensor(transedBboxes);
+          return {
+            value: {
+              xs: data?.data.tensor,
+              ys
+            },
+            done: false
+          }
+        })
       }
     };
     return iterator;
   }
   let ds = tf.data.generator(makeIterator as any).batch(batchSize).mapAsync(async (data: any) => {
-    const ys = await transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416);
+    const ys = tf.tidy(() => transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416));
     return {
       xs: data.xs,
       ys
     }
   });
 
+  let minLoss = Number.MAX_SAFE_INTEGER;
+  await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
   await model.fitDataset(ds, {
     batchesPerEpoch,
     epochs: epochs,
     callbacks: [
       tf.callbacks.earlyStopping({monitor: 'loss', patience: parseInt(patience, 10), verbose: 1}),
-      tf.node.tensorBoard(`${modelDir}/tensorboard`)
+      tf.node.tensorBoard(`${modelDir}/tensorboard`),
+      {
+        onBatchEnd: () => {},
+        setParams: () => {},
+        setModel: () => {},
+        onEpochBegin: () => {},
+        onEpochEnd: async (epoch: number, logs: {
+          loss: number
+        }) => {
+          if (logs.loss < minLoss) {
+            minLoss = logs.loss;
+            console.log('current epoch produces better model, will save it');
+            await model.save(`file://${modelDir}`);
+          }
+        },
+        onBatchBegin: () => {},
+        onTrainBegin: () => {},
+        onTrainEnd: () => {},
+      } as any
     ]
-  })
+  });
+
   await model.save(`file://${modelDir}`);
-  await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
+  
 }
 
 let predictModel: tf.LayersModel;
