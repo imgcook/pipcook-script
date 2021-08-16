@@ -3,7 +3,11 @@
  */
 import * as path from 'path';
 import * as fs from 'fs-extra';
+<<<<<<< HEAD
 import { ModelEntry, Runtime, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
+=======
+import { ModelEntry, Runtime, ScriptContext, DatasetPool } from '@pipcook/core';
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
 import {
   getBayesModel,
   loadModel,
@@ -14,13 +18,14 @@ import {
   save_all_words_list,
   saveBayesModel
 } from './script';
+import * as boa from '@pipcook/boa';
 import { cn, en } from './stopwords';
 import * as Types from './types';
+
 /**
  * Pipcook Plugin: bayes classifier model
  */
-const modelDefine = async (options: Record<string, any>, context: ScriptContext): Promise<any> => {
-  const { boa } = context;
+const modelDefine = async (options: Record<string, any>, _: ScriptContext): Promise<any> => {
   const sys = boa.import('sys');
   const {
     recoverPath
@@ -48,7 +53,6 @@ const modelTrain = async (runtime: Runtime<Types.Sample, DatasetPool.Types.Objec
     mode = 'cn'
   } = options;
   const { modelDir } = context.workspace;
-  const { boa } = context;
   const sys = boa.import('sys');
 
   sys.path.insert(0, path.join(__dirname, 'assets'));
@@ -79,6 +83,7 @@ const modelTrain = async (runtime: Runtime<Types.Sample, DatasetPool.Types.Objec
 
 const main: ModelEntry<Types.Sample, DatasetPool.Types.ObjectDetectionDatasetMeta>
   = async (runtime, options, context) => {
+  boa.setenv(path.join(context.workspace.frameworkDir, 'site-packages'));
   let model = await modelDefine(options, context);
   model = await modelTrain(runtime, options, context, model);
 };

@@ -1,7 +1,5 @@
 'use strict';
 
-import fs from 'fs';
-import readline from 'readline';
 import { zip, unzip } from 'lodash';
 
 function strip(str: string): string {

@@ -29,11 +29,19 @@ export function yolo_nms(outputs: tf.Tensor[][]) {
   scores = tf.max(dscores, [1]);
   bbox = tf.reshape(bbox, [-1, 4]);
   let classes = tf.argMax(dscores, 1);
+<<<<<<< HEAD
   const nonMaxScores = tf.image.nonMaxSuppressionWithScore(bbox as tf.Tensor2D, scores as tf.Tensor1D, 8, 0.5, 0.5);
   let { selectedIndices, selectedScores } = nonMaxScores;
   const num_valid_nms_boxes = selectedIndices.shape[0];
   selectedIndices = tf.concat([selectedIndices, tf.zeros([8 - num_valid_nms_boxes], 'int32')], 0);
   selectedScores = tf.concat([selectedScores, tf.zeros([8 - num_valid_nms_boxes], 'float32')], -1);
+=======
+  const nonMaxScores = tf.image.nonMaxSuppressionWithScore(bbox as tf.Tensor2D, scores as tf.Tensor1D, 16, 0.5, 0.5);
+  let { selectedIndices, selectedScores } = nonMaxScores;
+  const num_valid_nms_boxes = selectedIndices.shape[0];
+  selectedIndices = tf.concat([selectedIndices, tf.zeros([16 - num_valid_nms_boxes], 'int32')], 0);
+  selectedScores = tf.concat([selectedScores, tf.zeros([16 - num_valid_nms_boxes], 'float32')], -1);
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
   let boxes = tf.gather(bbox, selectedIndices)
   boxes = tf.expandDims(boxes, 0);
   scores=selectedScores;

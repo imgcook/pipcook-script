@@ -17,15 +17,23 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
     "@node-rs/jieba": "^1.3.1",
+=======
+    "@pipcook/boa": "^2.1.0",
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
     "@pipcook/core": "^2.0.0",
     "csv-parse": "^4.8.8",
     "csv-stringify": "^5.3.6",
     "fs-extra": "^9.1.0",
     "glob-promise": "^3.4.0",
+<<<<<<< HEAD
     "jieba-js": "^1.0.2",
     "lodash": "^4.17.21",
     "node-jieba": "0.0.3",
+=======
+    "lodash": "^4.17.21",
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
     "pipcook-downloader": "^8.0.0"
   },
   "gitHead": "53e131a069b3112a74ae5d99aa1ab08bec768c7e",

@@ -15,6 +15,7 @@ const resizeEntry: DataflowEntry<
     throw new TypeError('Paremeter `size` is invlaid.');
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
   return await DatasetPool.transformDatasetPool<
     DatasetPool.Types.ObjectDetection.Sample,
     DatasetPool.Types.ObjectDetection.DatasetMeta,
@@ -28,6 +29,11 @@ const resizeEntry: DataflowEntry<
     transform: async (sample): Promise<TransedSample> => {
       if (!sample.data.uri && !sample.data.buffer) {
 >>>>>>> 6bd0c932eddf05ebf1ffa35045144b0eb6dd1110
+=======
+  return datasetPool.transform({
+    transform: async (sample): Promise<TransedSample> => {
+      if (!sample.data.uri && !sample.data.buffer) {
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
         throw new TypeError('sample data is empty');
       }
       const originImage = await DataCook.Image.read(sample.data.uri as string || sample.data.buffer as ArrayBuffer);

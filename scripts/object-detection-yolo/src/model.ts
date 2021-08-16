@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { DataCook, DatasetPool, ModelEntry, Runtime, ScriptContext, PredictResult } from '@pipcook/core';
 =======
 import { DataCook, DatasetPool, ModelEntry, PredictEntry, Runtime, ScriptContext } from '@pipcook/core';
 >>>>>>> 6bd0c932eddf05ebf1ffa35045144b0eb6dd1110
+=======
+import { DataCook, DatasetPool, ModelEntry, PredictEntry, Runtime, ScriptContext } from '@pipcook/core';
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
 import * as tf from '@tensorflow/tfjs-node';
 import * as path from 'path';
 import * as fs from 'fs-extra';
@@ -25,9 +29,9 @@ function transformBBox(bboxes: number[][], width: number, height: number, labelI
     box[3] = box[3] / height;
     box[4] = labelIds[index2];
   });
-  bboxes = bboxes.slice(0, 8);
-  if (bboxes.length < 8) {
-    bboxes = bboxes.concat(new Array(8 - bboxes.length).fill([0,0,0,0,0]));
+  bboxes = bboxes.slice(0, 16);
+  if (bboxes.length < 16) {
+    bboxes = bboxes.concat(new Array(16 - bboxes.length).fill([0,0,0,0,0]));
   }
   return bboxes;
 }
@@ -71,14 +75,19 @@ async function checkTrainDatasetPool(datasetPool: DatasetPool.Types.DatasetPool<
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext) => {
 =======
 const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, context) => {
 >>>>>>> 6bd0c932eddf05ebf1ffa35045144b0eb6dd1110
+=======
+const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, context) => {
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
   const { modelDir } = context.workspace;
   const {
     epochs = 20,
-    batchSize = 16
+    batchSize = 16,
+    patience = 10
   } = options;
 
   const dataset = await checkTrainDatasetPool(api.dataset);
@@ -125,6 +134,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
             throw new TypeError('Read sample error.');
           }
         }
+<<<<<<< HEAD
         const bboxes = data.label.map((ele2) => ele2.bbox);
         const labels = data.label.map((ele2) => meta.categories?.indexOf(ele2.name)) as number[];
         const transedBboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
@@ -136,38 +146,86 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
           },
           done: false
         }
+=======
+        return tf.tidy(() => {
+          const bboxes = (data as TransedSample).label.map((ele2) => ele2.bbox);
+          const labels = (data as TransedSample).label.map((ele2) => meta.categories?.indexOf(ele2.name)) as number[];
+          const transedBboxes = transformBBox(bboxes, meta.dimension.x, meta.dimension.y, labels);
+          const ys = tf.tensor(transedBboxes);
+          return {
+            value: {
+              xs: data?.data.tensor,
+              ys
+            },
+            done: false
+          }
+        })
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
       }
     };
     return iterator;
   }
   let ds = tf.data.generator(makeIterator as any).batch(batchSize).mapAsync(async (data: any) => {
+<<<<<<< HEAD
     const ys = await transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416);
+=======
+    const ys = tf.tidy(() => transformTargets(data.ys, getConstants().yolo_tiny_anchors, 416));
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
     return {
       xs: data.xs,
       ys
     }
   });
 
+  let minLoss = Number.MAX_SAFE_INTEGER;
+  await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
   await model.fitDataset(ds, {
     batchesPerEpoch,
     epochs: epochs,
     callbacks: [
-      tf.callbacks.earlyStopping({monitor: 'loss', patience: 3, verbose: 1}),
-      tf.node.tensorBoard(`${modelDir}/tensorboard`)
+      tf.callbacks.earlyStopping({monitor: 'loss', patience: parseInt(patience, 10), verbose: 1}),
+      tf.node.tensorBoard(`${modelDir}/tensorboard`),
+      {
+        onBatchEnd: () => {},
+        setParams: () => {},
+        setModel: () => {},
+        onEpochBegin: () => {},
+        onEpochEnd: async (epoch: number, logs: {
+          loss: number
+        }) => {
+          if (logs.loss < minLoss) {
+            minLoss = logs.loss;
+            console.log('current epoch produces better model, will save it');
+            await model.save(`file://${modelDir}`);
+          }
+        },
+        onBatchBegin: () => {},
+        onTrainBegin: () => {},
+        onTrainEnd: () => {},
+      } as any
     ]
-  })
+  });
+
   await model.save(`file://${modelDir}`);
+<<<<<<< HEAD
   await fs.writeJSON(path.join(modelDir, 'categories.json'), meta.categories);
+=======
+  
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
 }
 
 let predictModel: tf.LayersModel;
 let categories: string[];
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const predict = async (api: Runtime<TransedSample, ImageDatasetMeta>, options: Record<string, any>, context: ScriptContext): Promise<PredictResult> => {
 =======
 const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, context): Promise<DatasetPool.Types.ObjectDetection.PredictResult> => {
 >>>>>>> 6bd0c932eddf05ebf1ffa35045144b0eb6dd1110
+=======
+const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, context): Promise<DatasetPool.Types.ObjectDetection.PredictResult> => {
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
   const { modelDir } = context.workspace;
 
   if (!categories) {
@@ -179,22 +237,29 @@ const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, co
 
   await api.dataset.predicted?.seek(0);
 <<<<<<< HEAD
+<<<<<<< HEAD
   const dataBatch = await api.dataset.predicted?.nextBatch(1);
   const meta = await api.dataset.getDatasetMeta();
 
   if (!(dataBatch?.length === 1)) {
     throw new TypeError('no data');
 =======
+=======
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
   const dataBatch = await api.dataset.predicted?.nextBatch(-1);
   const meta = await api.dataset.getDatasetMeta();
   if (!dataBatch) {
     throw new TypeError('No data found in dataset.');
+<<<<<<< HEAD
 >>>>>>> 6bd0c932eddf05ebf1ffa35045144b0eb6dd1110
+=======
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
   }
 
   const tensors = tf.stack(dataBatch.map(ele => ele.data.tensor));
   const result = predictModel.predict(tensors);
   const [output_0, output_1] = result as tf.Tensor[];
+<<<<<<< HEAD
   const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, 1);
   const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, 1);
 <<<<<<< HEAD
@@ -227,6 +292,10 @@ const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, co
   }
   return predictResult;
 =======
+=======
+  const box0 = yolo_boxes(output_0, getConstants().yolo_tiny_anchors1, categories.length);
+  const box1 = yolo_boxes(output_1, getConstants().yolo_tiny_anchors2, categories.length);
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
 
 
   const finalResult = [];
@@ -265,7 +334,10 @@ const predict: PredictEntry<TransedSample, ImageDatasetMeta> = async (api, _, co
     finalResult.push(predictResult);
   }
   return finalResult;
+<<<<<<< HEAD
 >>>>>>> 6bd0c932eddf05ebf1ffa35045144b0eb6dd1110
+=======
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
 }
 
 export {

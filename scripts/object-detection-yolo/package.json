@@ -38,6 +38,10 @@
     "@pipcook/core": "^2.0.0",
     "@tensorflow/tfjs-core": "^3.8.0",
     "@tensorflow/tfjs-node": "^3.8.0",
+<<<<<<< HEAD
+=======
+    "fast-xml-parser": "^3.19.0",
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
     "fs-extra": "^8.1.0",
     "glob-promise": "^4.1.0",
     "pipcook-downloader": "^8.0.0"

@@ -2,9 +2,14 @@
  * @file This plugin is to access classification image data from different sources. Make sure that
  * the data is conform to expectation.
  */
+import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+import * as boa from '@pipcook/boa';
 
+<<<<<<< HEAD
  import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
  
+=======
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
 function transformRecord(record: any, schemas: DataCook.Dataset.Types.TableSchema, data: string[], label: string) {
   const obj: any = {
     data: []
@@ -103,7 +108,6 @@ const OdpsDataCollect: DatasourceEntry<DataCook.Dataset.Types.Sample, DatasetPoo
 
   data = data.split(',');
 
-  const { boa } = context;
   const ODPS = boa.import('odps').ODPS;
   const { len } = boa.builtins();
 

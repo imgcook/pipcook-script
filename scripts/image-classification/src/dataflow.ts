@@ -70,7 +70,10 @@ const resizeEntry: DataflowEntry<IN_SAMPLE, IN_META, OUT_SAMPLE, OUT_META> =
       };
     }
   });
+<<<<<<< HEAD
   console.log('vvvvv', v);
+=======
+>>>>>>> fe00a8e14b66b37e1895b56297fe223295f18bda
   return v;
 }
 
