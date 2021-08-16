@@ -22,7 +22,7 @@ function process(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
 const objectDetectionDataSource: DatasourceEntry<
   DataCook.Dataset.Types.Sample,
   DatasetPool.Types.ObjectDetectionDatasetMeta
-> = async (options: Record<string, any>, context: ScriptContext) => {
+> = async (options, context) => {
    const {
      url = ''
    } = options;
@@ -83,7 +83,7 @@ const objectDetectionDataSource: DatasourceEntry<
    test && process(test, testAnnotationPath);
    valid && process(valid, validAnnotationPath);
   
-   return await DatasetPool.ObjectDetection.makeObjectDetectionDatasetFromCoco({
+   return await DatasetPool.makeObjectDetectionDatasetFromCoco({
     trainAnnotationObj: train as DataCook.Dataset.Types.Coco.Meta,
     testAnnotationObj: test as DataCook.Dataset.Types.Coco.Meta,
     validAnnotationObj: valid as DataCook.Dataset.Types.Coco.Meta,

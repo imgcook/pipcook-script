@@ -3,7 +3,7 @@
  */
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import { ModelEntry, Runtime, ScriptContext } from '@pipcook/pipcook-core';
+import { ModelEntry, Runtime, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
 import {
   getBayesModel,
   loadModel,
@@ -15,13 +15,11 @@ import {
   saveBayesModel
 } from './script';
 import { cn, en } from './stopwords';
-
+import * as Types from './types';
 /**
  * Pipcook Plugin: bayes classifier model
- * @param data Pipcook uniform sample data
- * @param args args. If the model path is provided, it will restore the model previously saved
  */
-const modelDefine = async (runtime: Runtime<string>, options: Record<string, any>, context: ScriptContext): Promise<any> => {
+const modelDefine = async (options: Record<string, any>, context: ScriptContext): Promise<any> => {
   const { boa } = context;
   const sys = boa.import('sys');
   const {
@@ -45,7 +43,7 @@ const modelDefine = async (runtime: Runtime<string>, options: Record<string, any
  * @param data Pipcook uniform data
  * @param model Eshcer model
  */
-const modelTrain = async (runtime: Runtime<string>, options: Record<string, any>, context: ScriptContext, model: any): Promise<any> => {
+const modelTrain = async (runtime: Runtime<Types.Sample, DatasetPool.Types.ObjectDetectionDatasetMeta>, options: Record<string, any>, context: ScriptContext, model: any): Promise<any> => {
   const {
     mode = 'cn'
   } = options;
@@ -59,13 +57,11 @@ const modelTrain = async (runtime: Runtime<string>, options: Record<string, any>
 
   const rawData = [];
   const rawClass = [];
-  // @ts-ignore
-  let sample = await runtime.dataset.train.next();
+  let sample = await runtime.dataset.train?.next();
   while (sample) {
     rawData.push(sample.data);
     rawClass.push(sample.label.toString());
-    // @ts-ignore
-    sample = await runtime.dataset.train.next();
+    sample = await runtime.dataset.train?.next();
   };
   const text_list = TextProcessing(rawData, rawClass, boa);
 
@@ -77,12 +73,13 @@ const modelTrain = async (runtime: Runtime<string>, options: Record<string, any>
   await fs.writeFile(path.join(modelDir, 'stopwords.txt'), stopWords);
   save_all_words_list(feature_words, path.join(modelDir, 'feature_words.pkl'), boa);
   saveBayesModel(classifier, path.join(modelDir, 'model.pkl'), boa);
-  await runtime.saveModel(modelDir, '');
+  await runtime.saveModel(modelDir);
   return classifier;
 };
 
-const main: ModelEntry<string> = async(runtime: Runtime<string>, options: Record<string, any>, context: ScriptContext) => {
-  let model = await modelDefine(runtime, options, context);
+const main: ModelEntry<Types.Sample, DatasetPool.Types.ObjectDetectionDatasetMeta>
+  = async (runtime, options, context) => {
+  let model = await modelDefine(options, context);
   model = await modelTrain(runtime, options, context, model);
 };
 export default main;

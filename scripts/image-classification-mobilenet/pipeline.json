@@ -1,0 +1,15 @@
+{
+  "specVersion": "2.0",
+  "datasource": "file:///Users/wangxiaojian/wangxj/pipcook-script/scripts/image-classification-mobilenet/build/datasource.js?url=https://ai-sample.oss-cn-hangzhou.aliyuncs.com/image_classification/datasets/imageclass-test.zip",
+  "dataflow": [
+    "file:///Users/wangxiaojian/wangxj/pipcook-script/scripts/image-classification-mobilenet/build/dataflow.js?size=224&size=224"
+  ],
+  "model": "file:///Users/wangxiaojian/wangxj/pipcook-script/scripts/image-classification-mobilenet/build/model.js",
+  "options": {
+    "framework": "mobilenet@1.0.0",
+    "train": {
+      "epochs": 1000,
+      "validationRequired": true
+    }
+  }
+}

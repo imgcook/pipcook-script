@@ -23,5 +23,8 @@ module.exports = {
     filename: "[name].js",
     libraryTarget: 'umd'
   },
+  externals: {
+    '@pipocook/datacook': 'commonjs2 @pipcook/datacook'
+  },
   mode: 'development'
 };

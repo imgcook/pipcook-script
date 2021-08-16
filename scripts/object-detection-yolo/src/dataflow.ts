@@ -6,8 +6,7 @@ const resizeEntry: DataflowEntry<
   DatasetPool.Types.ObjectDetection.DatasetMeta,
   TransedSample,
   ImageDatasetMeta
-> =
-  async (datasetPool: DatasetPool.Types.ObjectDetection.DatasetPool, options: Record<string, any>, _: ScriptContext) => {
+> = async (datasetPool, options, _) => {
   const [ x = '-1', y = '-1' ] = options['size'];
 
   const parsedX = parseInt(x);
@@ -15,6 +14,7 @@ const resizeEntry: DataflowEntry<
   if (parsedX == -1 || parsedY == -1) {
     throw new TypeError('Paremeter `size` is invlaid.');
   }
+<<<<<<< HEAD
   return await DatasetPool.transformDatasetPool<
     DatasetPool.Types.ObjectDetection.Sample,
     DatasetPool.Types.ObjectDetection.DatasetMeta,
@@ -23,6 +23,11 @@ const resizeEntry: DataflowEntry<
   >({
     transform: async (sample: DatasetPool.Types.ObjectDetection.Sample): Promise<TransedSample> => {
       if (!sample.data.uri && sample.data.buffer) {
+=======
+  return datasetPool.transform({
+    transform: async (sample): Promise<TransedSample> => {
+      if (!sample.data.uri && !sample.data.buffer) {
+>>>>>>> 6bd0c932eddf05ebf1ffa35045144b0eb6dd1110
         throw new TypeError('sample data is empty');
       }
       const originImage = await DataCook.Image.read(sample.data.uri as string || sample.data.buffer as ArrayBuffer);
@@ -32,14 +37,17 @@ const resizeEntry: DataflowEntry<
       const ratioY = parsedY / originHeight;
       const resized = originImage.resize(parsedX, parsedY);
       const labels = sample.label;
-      for (const curLabel of labels) {
-        curLabel.bbox = [
-          curLabel.bbox[0] * ratioX,
-          curLabel.bbox[1] * ratioY,
-          curLabel.bbox[2] * ratioX,
-          curLabel.bbox[3] * ratioY
-        ];
+      if (labels) {
+        for (const curLabel of labels) {
+          curLabel.bbox = [
+            curLabel.bbox[0] * ratioX,
+            curLabel.bbox[1] * ratioY,
+            curLabel.bbox[2] * ratioX,
+            curLabel.bbox[3] * ratioY
+          ];
+        }
       }
+
       return {
         data: {
           tensor: resized.toTensor(),
@@ -54,6 +62,7 @@ const resizeEntry: DataflowEntry<
     metadata: async (meta): Promise<ImageDatasetMeta> => {
       return {
         ...meta,
+        type: DataCook.Dataset.Types.DatasetType.Image,
         dimension: {
           x: parsedX,
           y: parsedY,
@@ -61,7 +70,7 @@ const resizeEntry: DataflowEntry<
         }
       };
     }
-  }, datasetPool);
+  });
 }
 
 /**
