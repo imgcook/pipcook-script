@@ -1,4 +1,5 @@
-import { ModelEntry, Runtime, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
+import { ModelEntry, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
+import * as tf from '@tensorflow/tfjs-node';
 import Dataset = DataCook.Dataset;
 import * as tf from '@tensorflow/tfjs-node';
 
@@ -59,7 +60,7 @@ const main: ModelEntry<Dataset.Types.Sample, DatasetPool.Types.TableDatasetMeta>
       const ys = tf.tidy(() => tf.stack(batch.map((ele) => ele.label)));
       const res: any[] = (await model.trainOnBatch(xs, ys)) as any;
       if (j % 10 === 0) {
-        console.log(`Epoch ${i} - Iteration ${j} : loss is ${res[0]} and accuracy is ${res[1]}`);
+        console.log(`Epoch ${i} - Iteration ${j} : loss is ${(res as any)[0]} and accuracy is ${(res as any)[1]}`);
       }
     }
   }

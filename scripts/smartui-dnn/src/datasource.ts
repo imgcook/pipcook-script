@@ -2,7 +2,6 @@
  * @file This plugin is to access classification image data from different sources. Make sure that
  * the data is conform to expectation.
  */
-
 import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
 import * as path from 'path';
 const boa = require('@pipcook/boa');

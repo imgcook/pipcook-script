@@ -25,6 +25,7 @@ module.exports = {
   },
   externals: {
     '@pipcook/boa': 'commonjs2 @pipcook/boa',
+    '@pipcook/core': 'commonjs2 @pipcook/core',
     '@pipcook/datacook': 'commonjs2 @pipcook/datacook'
   },
   mode: 'development'
