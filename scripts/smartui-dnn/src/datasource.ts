@@ -3,8 +3,12 @@
  * the data is conform to expectation.
  */
 
- import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
- 
+import { DataCook, DatasourceEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+import * as path from 'path';
+const boa = require('@pipcook/boa');
+const { len } = boa.builtins();
+const sys = boa.import('sys');
+
 function transformRecord(record: any, schemas: DataCook.Dataset.Types.TableSchema, data: string[], label: string) {
   const obj: any = {
     data: []
@@ -13,7 +17,7 @@ function transformRecord(record: any, schemas: DataCook.Dataset.Types.TableSchem
     if (data.includes(schema.name)) {
       obj.data.push(parseFloat(record[schema.name] || '0'))
     } else if (label === schema.name) {
-      obj.label = record[schema.name];
+      obj.label = parseFloat(record[schema.name]);
     }
   }
   return obj;
@@ -21,29 +25,36 @@ function transformRecord(record: any, schemas: DataCook.Dataset.Types.TableSchem
 
 class DataAccessorImpl<T extends DataCook.Dataset.Types.Sample> implements DataCook.Dataset.Types.Dataset<T> {
   reader: any;
-  boa: any;
   schema: DataCook.Dataset.Types.TableSchema;
   table: string;
   client: any;
   data: string[];
   label: string;
+  pt: string | undefined;
 
-  constructor(table: string, client: any, boa: any, schema: DataCook.Dataset.Types.TableSchema, data: string[], label: string) {
-    const reader = client.read_table(table);
+  constructor(table: string, client: any, schema: DataCook.Dataset.Types.TableSchema, data: string[], label: string, pt?: string) {
+    let reader;
+    if (pt) {
+      reader = client.read_table(table, boa.kwargs({
+        partition: pt
+      }));
+    } else {
+      reader = client.read_table(table);
+    }
     this.table = table;
     this.client = client;
     this.reader = reader;
-    this.boa = boa;
     this.schema = schema;
     this.data = data;
     this.label = label;
+    this.pt = pt;
   }
 
   shuffle(): void {
   }
 
   async next(): Promise<T | null> {
-    const { next } = this.boa.builtins();
+    const { next } = boa.builtins();
     const record = next(this.reader, null);
     return record && transformRecord(record, this.schema, this.data, this.label);
   }
@@ -81,7 +92,14 @@ class DataAccessorImpl<T extends DataCook.Dataset.Types.Sample> implements DataC
 
   async seek(offset: number): Promise<void> {
     if (offset === 0) {
-      const reader = this.client.read_table(this.table);
+      let reader;
+      if (this.pt) {
+        reader = this.client.read_table(this.table, boa.kwargs({
+          partition: this.pt
+        }));
+      } else {
+        reader = this.client.read_table(this.table);
+      }
       this.reader = reader;
     }
   }
@@ -93,8 +111,12 @@ const OdpsDataCollect: DatasourceEntry<DataCook.Dataset.Types.Sample, DatasetPoo
     table,
     endpoint,
     data,
-    label
+    label,
+    pt
   } = options;
+
+  sys.path.append(path.join(context.workspace.frameworkDir, 'site-packages'));
+  const ODPS = boa.import('odps').ODPS;
 
   const {
     odpssource_accessId,
@@ -103,16 +125,11 @@ const OdpsDataCollect: DatasourceEntry<DataCook.Dataset.Types.Sample, DatasetPoo
 
   data = data.split(',');
 
-  const { boa } = context;
-  const ODPS = boa.import('odps').ODPS;
-  const { len } = boa.builtins();
-
   const client = ODPS(odpssource_accessId, odpssource_accessKey, project, endpoint);
   const tableClient = client.get_table(table);
 
   // get table schema
   const schema: DataCook.Dataset.Types.TableSchema = [];
-
   const columns = tableClient.schema.columns;
   for (let i = 0; i < len(columns); i++) {
     const column = columns[i];
@@ -124,7 +141,7 @@ const OdpsDataCollect: DatasourceEntry<DataCook.Dataset.Types.Sample, DatasetPoo
   if (data[0] === '*') {
     data = schema.map(ele => ele.name).filter(ele => ele !== label);
   }
-  const train = new DataAccessorImpl(table, client, boa, schema, data, label);
+  const train = new DataAccessorImpl(table, client, schema, data, label, pt);
   const test = train;
   return DatasetPool.ArrayDatasetPoolImpl.from({
     train,

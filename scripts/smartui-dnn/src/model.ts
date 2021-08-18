@@ -1,7 +1,8 @@
 import { ModelEntry, Runtime, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
 import Dataset = DataCook.Dataset;
+import * as tf from '@tensorflow/tfjs-node';
 
-function createModel(featureNumbers: number, tf: any) {
+function createModel(featureNumbers: number) {
   const model = tf.sequential();
   model.add(tf.layers.dense({
     inputShape: [featureNumbers],
@@ -31,18 +32,12 @@ const main: ModelEntry<Dataset.Types.Sample, DatasetPool.Types.TableDatasetMeta>
     epochs = 10,
     batchSize = 16
   } = options;
-  let tf: any;
-  try {
-    tf = await context.importJS('@tensorflow/tfjs-node-gpu');
-  } catch {
-    tf = await context.importJS('@tensorflow/tfjs-node');
-  }
   if (!api.dataset.train) {
     throw new TypeError('No train data found.');
   }
   const meta = await api.dataset.getDatasetMeta();
   const featureNumbers = meta?.dataKeys?.length as number;
-  const model = createModel(featureNumbers, tf);
+  const model = createModel(featureNumbers);
 
   model.compile({
     optimizer: tf.train.adam(1e-3),
@@ -62,7 +57,7 @@ const main: ModelEntry<Dataset.Types.Sample, DatasetPool.Types.TableDatasetMeta>
       }
       const xs = tf.tidy(() => tf.stack(batch.map((ele) => ele.data)));
       const ys = tf.tidy(() => tf.stack(batch.map((ele) => ele.label)));
-      const res = await model.trainOnBatch(xs, ys);
+      const res: any[] = (await model.trainOnBatch(xs, ys)) as any;
       if (j % 10 === 0) {
         console.log(`Epoch ${i} - Iteration ${j} : loss is ${res[0]} and accuracy is ${res[1]}`);
       }
