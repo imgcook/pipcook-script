@@ -1,5 +1,4 @@
 import { ModelEntry, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
-import * as tf from '@tensorflow/tfjs-node';
 import Dataset = DataCook.Dataset;
 import * as tf from '@tensorflow/tfjs-node';
 
