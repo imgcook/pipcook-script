@@ -1,6 +1,6 @@
 import { ModelEntry, ScriptContext, DatasetPool, DataCook } from '@pipcook/core';
-import Dataset = DataCook.Dataset;
 import * as tf from '@tensorflow/tfjs-node';
+import Dataset = DataCook.Dataset;
 
 function createModel(featureNumbers: number) {
   const model = tf.sequential();
@@ -57,7 +57,7 @@ const main: ModelEntry<Dataset.Types.Sample, DatasetPool.Types.TableDatasetMeta>
       }
       const xs = tf.tidy(() => tf.stack(batch.map((ele) => ele.data)));
       const ys = tf.tidy(() => tf.stack(batch.map((ele) => ele.label)));
-      const res: any[] = (await model.trainOnBatch(xs, ys)) as any;
+      const res: number[] = (await model.trainOnBatch(xs, ys)) as number[];
       if (j % 10 === 0) {
         console.log(`Epoch ${i} - Iteration ${j} : loss is ${(res as any)[0]} and accuracy is ${(res as any)[1]}`);
       }
