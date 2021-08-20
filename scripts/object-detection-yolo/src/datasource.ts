@@ -20,6 +20,19 @@ function processCoco(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
   });
 }
 
+function statisticCoco(data: DataCook.Dataset.Types.Coco.Meta) {
+  const statisticId: Record<string, number> = {};
+  const statistic: Record<string, number> = {};
+  data?.annotations.forEach(ann => {
+    statisticId[ann.category_id] = statisticId[ann.category_id] !== undefined ? statisticId[ann.category_id] + 1 : 1;
+  });
+
+  data?.categories.forEach(category => {
+    statistic[category.name] = statisticId[category.id] | 0;
+  });
+  return statistic;
+}
+
 function processPascalVoc(data: DataCook.Dataset.Types.PascalVoc.Annotation[], imageFiles: string[], datasetPath: string) {
   data.forEach(ann => {
     const imgPath = path.join(datasetPath, ann.annotation.path || path.join(ann.annotation.folder, ann.annotation.filename));
@@ -28,6 +41,20 @@ function processPascalVoc(data: DataCook.Dataset.Types.PascalVoc.Annotation[], i
     }
     ann.annotation.path = imgPath;
   });
+}
+
+function statisticPascalVoc(annotations?: DataCook.Dataset.Types.PascalVoc.Annotation[]) {
+  const statistic: Record<string, number> = {};
+  annotations?.forEach((ann) => {
+    if (Array.isArray(ann.annotation.object)) {
+      ann.annotation.object.forEach(obj => {
+        statistic[obj.name] = statistic[obj.name] ? statistic[obj.name]++ : 1;
+      })
+    } else {
+      statistic[ann.annotation.object.name] = statistic[ann.annotation.object.name] !== undefined ? statistic[ann.annotation.object.name] + 1 : 1;
+    }
+  });
+  return statistic;
 }
 
 const objectDetectionDataSourceFromCoco: DatasourceEntry<
@@ -44,8 +71,6 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
 
   await fs.ensureDir(dataDir);
 
-  let isDownload = false;
-
   assert.ok(url, 'Please specify the url of your dataset');
 
   let targetPath: string;
@@ -60,7 +85,6 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
     await download(url, dataDir, {
       extract: true
     });
-    isDownload = true;
   }
 
   console.log('unzip and collecting data...');
@@ -90,7 +114,7 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
   train && processCoco(train, trainAnnotationPath);
   test && processCoco(test, testAnnotationPath);
   valid && processCoco(valid, validAnnotationPath);
- 
+
   return await DatasetPool.makeObjectDetectionDatasetFromCoco({
    trainAnnotationObj: train as DataCook.Dataset.Types.Coco.Meta,
    testAnnotationObj: test as DataCook.Dataset.Types.Coco.Meta,
@@ -147,8 +171,11 @@ const objectDetectionDataSourceFromPascalVoc: DatasourceEntry<
    }
   }
   train.length > 0 && processPascalVoc(train, imageFiles, dataDir);
+  console.log('train:', statisticPascalVoc(train));
   test.length > 0 && processPascalVoc(test, imageFiles, dataDir);
+  console.log('test:', statisticPascalVoc(test));
   valid.length > 0 && processPascalVoc(valid, imageFiles, dataDir);
+  console.log('valid:', statisticPascalVoc(valid));
   return DatasetPool.makeObjectDetectionDatasetFromPascalVoc({
    trainAnnotationList: train.length > 0 ? train : undefined,
    testAnnotationList: test.length > 0 ? test : undefined,

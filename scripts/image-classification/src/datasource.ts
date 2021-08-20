@@ -3,7 +3,7 @@
  * the data is conform to expectation.
  */
 
-import { DatasourceEntry, ScriptContext, DataCook, DatasetPool } from '@pipcook/core';
+import { DatasourceEntry, DataCook, DatasetPool } from '@pipcook/core';
 // @ts-ignore
 import download from 'pipcook-downloader';
 import * as fs from 'fs-extra';
@@ -68,9 +68,8 @@ const imageClassDataCollect: DatasourceEntry<DataCook.Dataset.Types.ImageClassif
   const valid: DataCook.Dataset.Types.ImageClassification.ImageDesc[] = [];
 
   for (const imagePath of imagePaths) {
-    const splitString = imagePath.split(path.sep);
-    const trainType = splitString[splitString.length - 3];
-    const category = splitString[splitString.length - 2];
+    const trainType = path.basename(path.dirname(path.dirname(imagePath)));
+    const category = path.basename(path.dirname(imagePath));
 
     if (trainType === 'train') {
       train.push({
