@@ -98,8 +98,7 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
   let validAnnotationPath: string = '';
 
   for (const annotationPath of annotationPaths) {
-    const splitString = annotationPath.split(path.sep);
-    const trainType = splitString[splitString.length - 2];
+    const trainType = path.basename(path.dirname(annotationPath));
     if (trainType === 'train') {
       train = await fs.readJSON(annotationPath);
       trainAnnotationPath = path.join(annotationPath, '..');
