@@ -44,8 +44,6 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
 
   await fs.ensureDir(dataDir);
 
-  let isDownload = false;
-
   assert.ok(url, 'Please specify the url of your dataset');
 
   let targetPath: string;
@@ -60,7 +58,6 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
     await download(url, dataDir, {
       extract: true
     });
-    isDownload = true;
   }
 
   console.log('unzip and collecting data...');
@@ -74,8 +71,7 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
   let validAnnotationPath: string = '';
 
   for (const annotationPath of annotationPaths) {
-    const splitString = annotationPath.split(path.sep);
-    const trainType = splitString[splitString.length - 2];
+    const trainType = path.basename(path.dirname(annotationPath));
     if (trainType === 'train') {
       train = await fs.readJSON(annotationPath);
       trainAnnotationPath = path.join(annotationPath, '..');
@@ -90,7 +86,7 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
   train && processCoco(train, trainAnnotationPath);
   test && processCoco(test, testAnnotationPath);
   valid && processCoco(valid, validAnnotationPath);
- 
+
   return await DatasetPool.makeObjectDetectionDatasetFromCoco({
    trainAnnotationObj: train as DataCook.Dataset.Types.Coco.Meta,
    testAnnotationObj: test as DataCook.Dataset.Types.Coco.Meta,
