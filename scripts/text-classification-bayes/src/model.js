@@ -22,7 +22,6 @@ const textProcessing = (row_data, mode='cn') => {
     return words_list
 }
 
-
 const train = async (runtime, options, context) => {
   const { mode = 'cn' } = options;
   const { modelDir } = context.workspace;
@@ -38,7 +37,7 @@ const train = async (runtime, options, context) => {
     trainClass.push(d.label.toString());
   });
   // process text dataset
-  const trainWordsList = textProcessing(rawData);
+  const trainWordsList = textProcessing(trainData);
   let stopWords = mode === 'en' ? en : cn;
   vectorizer.initDict(trainWordsList, stopWords);
   const trainVector = vectorizer.transform(trainWordsList);
@@ -46,7 +45,6 @@ const train = async (runtime, options, context) => {
   await classifier.train(trainVector, trainClass);
   // predict
   const predClass = classifier.predict(trainVector);
-
   const acc = accuracyScore(trainClass, predClass);
   console.log(`train accuracy: ${acc}`);
   // save model file 
@@ -65,8 +63,6 @@ const modelLoad = async (context) => {
   const modelJson = modelFs.toString();
   const vectorizerFs =  await fs.readFile(path.join(modelDir, 'vectorizer.json'));
   const vectorizerJson = vectorizerFs.toString();
-  //console.log(modelJson)
-  //console.log(vectorizerJson)
   if (modelJson) classifier.load(modelJson);
   if (vectorizerJson) vectorizer.load(vectorizerJson);
   return [ classifier, vectorizer ];

@@ -3,7 +3,8 @@ const path = require('path');
 module.exports = {
   target: "node",
   entry: {
-    datasource: ["./src/datasource.ts"]
+    datasource: ["./src/datasource.ts"],
+    model: ["./src/model.js"]
   },
   module: {
     rules: [
@@ -23,7 +24,8 @@ module.exports = {
     libraryTarget: 'umd'
   },
   externals: {
-    '@pipcook/boa': 'commonjs2 @pipcook/boa'
+    '@pipcook/boa': 'commonjs2 @pipcook/boa',
+    '@node-rs/jieba': 'commonjs2 @node-rs/jieba',
   },
   mode: 'development'
 };
