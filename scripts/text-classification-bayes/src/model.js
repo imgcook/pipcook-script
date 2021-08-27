@@ -8,18 +8,22 @@ const { MultinomialNB } = DataCook.Model.NaiveBayes;
 const { CountVectorizer } = DataCook.Text;
 const { accuracyScore  } = DataCook.Metrics;
 
+let classifier;
+let vectorizer;
+
+load();
+
 const textProcessing = (row_data, mode='cn') => {
-    let words_list = [];
-    load();
-    row_data.forEach((data, i) => {
-      if (mode == 'cn'){
-        const word_cut = cut(data);
-        words_list.push(word_cut);
-      } else {
-        words_list.push(data)
-      }
-    });
-    return words_list
+  let words_list = [];
+  row_data.forEach((data, i) => {
+    if (mode == 'cn'){
+      const word_cut = cut(data);
+      words_list.push(word_cut);
+    } else {
+      words_list.push(data)
+    }
+  });
+  return words_list
 }
 
 const train = async (runtime, options, context) => {
@@ -69,7 +73,9 @@ const modelLoad = async (context) => {
 };
 
 const predict = async (runtime, options, context) => {
-  const [ classifier, vectorizer ] = await modelLoad(context);
+  if (!classifier || !vectorizer) {
+    [ classifier, vectorizer ] = await modelLoad(context);
+  }
   // access predict samples
   const predictData = [];
   const predictSamples = await runtime.dataset.predicted.nextBatch(-1);
