@@ -8,6 +8,9 @@ const { MultinomialNB } = DataCook.Model.NaiveBayes;
 const { CountVectorizer } = DataCook.Text;
 const { accuracyScore  } = DataCook.Metrics;
 
+let classifier;
+let vectorizer;
+
 const textProcessing = (row_data, mode='cn') => {
     let words_list = [];
     load();
@@ -69,7 +72,9 @@ const modelLoad = async (context) => {
 };
 
 const predict = async (runtime, options, context) => {
-  const [ classifier, vectorizer ] = await modelLoad(context);
+  if (!classifier || !vectorizer) {
+    [ classifier, vectorizer ] = await modelLoad(context);
+  }
   // access predict samples
   const predictData = [];
   const predictSamples = await runtime.dataset.predicted.nextBatch(-1);
