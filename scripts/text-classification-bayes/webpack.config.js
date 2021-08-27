@@ -3,8 +3,8 @@ const path = require('path');
 module.exports = {
   target: "node",
   entry: {
-    model: ["./src/model.ts"],
-    datasource: ["./src/datasource.ts"]
+    datasource: ["./src/datasource.ts"],
+    model: ["./src/model.js"]
   },
   module: {
     rules: [
@@ -24,9 +24,10 @@ module.exports = {
     libraryTarget: 'umd'
   },
   externals: {
-    '@pipcook/boa': 'commonjs2 @pipcook/boa',
     '@pipcook/core': 'commonjs2 @pipcook/core',
-    '@pipcook/datacook': 'commonjs2 @pipcook/datacook'
+    '@tensorflow/tfjs-node': 'commonjs2 @tensorflow/tfjs-node',
+    '@tensorflow/tfjs-node-gpu': 'commonjs2 @tensorflow/tfjs-node-gpu',
+    '@node-rs/jieba': 'commonjs2 @node-rs/jieba',
   },
   mode: 'development'
 };
