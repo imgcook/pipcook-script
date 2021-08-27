@@ -1,5 +1,4 @@
-import { DatasourceEntry, DatasetPool } from '@pipcook/core';
-import * as DataCook from '@pipcook/datacook';
+import { DataCook, DatasourceEntry, DatasetPool } from '@pipcook/core';
 
 export type Sample = DataCook.Dataset.Types.Sample<string, string>;
 export type ScriptDatasetPool = DatasetPool.Types.DatasetPool<Sample, DatasetPool.Types.ClassificationDatasetMeta>;
