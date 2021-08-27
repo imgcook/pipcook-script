@@ -24,7 +24,9 @@ module.exports = {
     libraryTarget: 'umd'
   },
   externals: {
-    '@pipcook/boa': 'commonjs2 @pipcook/boa',
+    '@pipcook/core': 'commonjs2 @pipcook/core',
+    '@tensorflow/tfjs-node': 'commonjs2 @tensorflow/tfjs-node',
+    '@tensorflow/tfjs-node-gpu': 'commonjs2 @tensorflow/tfjs-node-gpu',
     '@node-rs/jieba': 'commonjs2 @node-rs/jieba',
   },
   mode: 'development'
