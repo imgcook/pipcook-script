@@ -11,18 +11,19 @@ const { accuracyScore  } = DataCook.Metrics;
 let classifier;
 let vectorizer;
 
+load();
+
 const textProcessing = (row_data, mode='cn') => {
-    let words_list = [];
-    load();
-    row_data.forEach((data, i) => {
-      if (mode == 'cn'){
-        const word_cut = cut(data);
-        words_list.push(word_cut);
-      } else {
-        words_list.push(data)
-      }
-    });
-    return words_list
+  let words_list = [];
+  row_data.forEach((data, i) => {
+    if (mode == 'cn'){
+      const word_cut = cut(data);
+      words_list.push(word_cut);
+    } else {
+      words_list.push(data)
+    }
+  });
+  return words_list
 }
 
 const train = async (runtime, options, context) => {
