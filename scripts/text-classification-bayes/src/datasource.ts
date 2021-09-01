@@ -32,8 +32,7 @@ const textClassDataCollect: Entry = async (option: Record<string, any>, context:
   let validData: string;
   for (let i = 0; i < csvPaths.length; i++) {
     const csvPath = csvPaths[i];
-    const splitString = csvPath.split(path.sep);
-    const trainType = splitString[splitString.length - 2];
+    const trainType = path.basename(path.dirname(csvPath));
     if (trainType === 'train') {
       trainData = (await fs.readFile(csvPath)).toString();
     }
