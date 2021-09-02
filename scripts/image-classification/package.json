@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run clean && npm run compile && npm run pack",
     "pack": "webpack --config webpack.config.js",
-    "clean": "((rm -rf ./dist && rm -rf tsconfig.tsbuildinfo) || (rmdir /Q /S ./dist && rmdir /Q /S tsconfig.tsbuildinfo))",
+    "clean": "(rm -rf ./build ./dist || (rmdir /Q /S .\\build .\\dist || echo 'no build directory found'))",
     "compile": "tsc -b tsconfig.json"
   },
   "author": "",
