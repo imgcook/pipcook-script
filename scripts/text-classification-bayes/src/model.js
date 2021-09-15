@@ -3,7 +3,6 @@ const { DataCook } = require('@pipcook/core');
 const { cn, en } = require('./stopwords');
 const path = require('path');
 const fs = require('fs-extra');
-require('@tensorflow/tfjs-backend-cpu');
 const { MultinomialNB } = DataCook.Model.NaiveBayes;
 const { CountVectorizer } = DataCook.Text;
 const { accuracyScore  } = DataCook.Metrics;
