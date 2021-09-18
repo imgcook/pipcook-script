@@ -150,8 +150,6 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
     epochs: epochs,
     callbacks: [
       tf.callbacks.earlyStopping({monitor: 'loss', patience: parseInt(patience, 10), verbose: 1}),
-      // @ts-ignore tf.node is offered by tfjs-node or tfjs-node-gpu
-      require('@tensorflow/tfjs-node').node.tensorBoard(`${modelDir}/tensorboard`),
       {
         onBatchEnd: () => {},
         setParams: () => {},
