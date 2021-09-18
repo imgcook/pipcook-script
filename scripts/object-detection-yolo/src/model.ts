@@ -1,5 +1,5 @@
-import { DataCook, DatasetPool, ModelEntry, PredictEntry, Runtime, ScriptContext } from '@pipcook/core';
-import * as tf from '@tensorflow/tfjs';
+import { DataCook, DatasetPool, ModelEntry, PredictEntry } from '@pipcook/core';
+import * as tf from '@tensorflow/tfjs-node';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { tinyYoloBody, getConstants } from './model-utils/model';
