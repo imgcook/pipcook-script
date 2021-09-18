@@ -1,5 +1,5 @@
 import { DatasetPool } from '@pipcook/core';
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
 export interface TransedSample {
   data: tf.Tensor3D,

@@ -1,4 +1,4 @@
-import { DataCook, DatasetPool, ModelEntry, PredictEntry, Runtime, ScriptContext } from '@pipcook/core';
+import { DataCook, DatasetPool, ModelEntry, PredictEntry } from '@pipcook/core';
 import * as tf from '@tensorflow/tfjs-node';
 import * as path from 'path';
 import * as fs from 'fs-extra';
@@ -150,7 +150,6 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
     epochs: epochs,
     callbacks: [
       tf.callbacks.earlyStopping({monitor: 'loss', patience: parseInt(patience, 10), verbose: 1}),
-      tf.node.tensorBoard(`${modelDir}/tensorboard`),
       {
         onBatchEnd: () => {},
         setParams: () => {},

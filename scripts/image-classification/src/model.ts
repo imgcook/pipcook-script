@@ -2,7 +2,7 @@ import { ModelEntry, PredictResult, PredictEntry, DatasetPool } from '@pipcook/c
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { TransedSample, TransedMetadata } from './types';
-import * as tf from '@tensorflow/tfjs-node';
+import * as tf from '@tensorflow/tfjs';
 
 const defaultWeightsMap: {[key: string]: string} = {
   'resnet': 'https://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/resnet50_tfjs/model.json',
