@@ -1,5 +1,5 @@
 import { DataCook, DatasetPool, ModelEntry, PredictEntry, Runtime, ScriptContext } from '@pipcook/core';
-import * as tf from '@tensorflow/tfjs-node';
+import * as tf from '@tensorflow/tfjs';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { tinyYoloBody, getConstants } from './model-utils/model';
@@ -150,6 +150,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
     epochs: epochs,
     callbacks: [
       tf.callbacks.earlyStopping({monitor: 'loss', patience: parseInt(patience, 10), verbose: 1}),
+      // @ts-ignore tf.node is offered by tfjs-node or tfjs-node-gpu
       tf.node.tensorBoard(`${modelDir}/tensorboard`),
       {
         onBatchEnd: () => {},

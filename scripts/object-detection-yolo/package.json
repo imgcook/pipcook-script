@@ -35,7 +35,7 @@
     "nyc": "14.1.1"
   },
   "dependencies": {
-    "@pipcook/core": "^2.0.0",
+    "@pipcook/core": "^2.1.4",
     "@tensorflow/tfjs-core": "^3.8.0",
     "@tensorflow/tfjs-node": "^3.8.0",
     "fast-xml-parser": "^3.19.0",

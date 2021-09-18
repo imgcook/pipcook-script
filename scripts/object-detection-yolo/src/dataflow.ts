@@ -1,4 +1,4 @@
-import { DataCook, DataflowEntry, ScriptContext, DatasetPool } from '@pipcook/core';
+import { DataCook, DataflowEntry, DatasetPool } from '@pipcook/core';
 import { ImageDatasetMeta, TransedSample } from './types';
 
 const resizeEntry: DataflowEntry<
