@@ -17,7 +17,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pipcook/core": "^2.1.0",
+    "@node-rs/jieba": "^1.3.1",
+    "@pipcook/core": "^2.1.4",
     "@tensorflow/tfjs-backend-cpu": "^3.8.0",
     "csv-parse": "^4.8.8",
     "csv-stringify": "^5.3.6",
@@ -28,11 +29,13 @@
   },
   "gitHead": "53e131a069b3112a74ae5d99aa1ab08bec768c7e",
   "devDependencies": {
+    "@pipcook/cli": "^2.1.4",
     "@types/fs-extra": "^9.0.8",
     "@types/jasmine": "^3.5.7",
     "@types/lodash": "^4.14.168",
     "nyc": "14.1.1",
     "ts-loader": "^9.0.2",
+    "ts-node": "^10.2.1",
     "typescript": "^4.2.4",
     "webpack": "^5.24.3",
     "webpack-cli": "^4.5.0",

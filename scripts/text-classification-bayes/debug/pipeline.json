@@ -1,0 +1,14 @@
+{
+  "specVersion": "2.0",
+  "type": "TextClassification",
+  "datasource": "./src/datasource.ts?url=http://ai-sample.oss-cn-hangzhou.aliyuncs.com/image_classification/datasets/textClassification.zip",
+  "model": "./src/model.js",
+  "options": {
+    "framework": "tfjs@3.8-nlp",
+    "backend": "@tensorflow/tfjs-backend-cpu",
+    "train": {
+      "epochs": 20,
+      "validationRequired": true
+    }
+  }
+}

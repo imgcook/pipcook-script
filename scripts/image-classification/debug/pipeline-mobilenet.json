@@ -1,0 +1,16 @@
+{
+  "specVersion": "2.0",
+  "type": "ImageClassification",
+  "datasource": "./src/datasource.ts?url=http://ai-sample.oss-cn-hangzhou.aliyuncs.com/image_classification/datasets/imageclass-test.zip",
+  "dataflow": [
+    "./src/dataflow.ts?size=224&size=224"
+  ],
+  "model": "./src/model.ts?modelUrl=mobilenet",
+  "options": {
+    "framework": "tfjs@3.8",
+    "backend": null,
+    "train": {
+      "epochs": 1
+    }
+  }
+}

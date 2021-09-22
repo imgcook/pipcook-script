@@ -155,9 +155,12 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
         setParams: () => {},
         setModel: () => {},
         onEpochBegin: () => {},
-        onEpochEnd: async (epoch: number, logs: {
-          loss: number
-        }) => {
+        onEpochEnd: async (
+          epoch: number,
+          logs: {
+            loss: number
+          }
+        ) => {
           if (logs.loss < minLoss) {
             minLoss = logs.loss;
             console.log('current epoch produces better model, will save it');
@@ -172,7 +175,7 @@ const train: ModelEntry<TransedSample, ImageDatasetMeta> = async (api, options, 
   });
 
   await model.save(`file://${modelDir}`);
-  
+
 }
 
 let predictModel: tf.LayersModel;
