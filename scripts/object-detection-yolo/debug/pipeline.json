@@ -1,0 +1,15 @@
+{
+  "specVersion": "2.0",
+  "datasource": "src/datasource.ts?url=https://pc-github.oss-us-west-1.aliyuncs.com/dataset/object-detection-yolo-min.zip",
+  "dataflow": [ "src/dataflow.ts?size=416&size=416" ],
+  "model": "src/model.ts",
+  "artifact": [],
+  "options": {
+    "framework": "tfjs@3.8",
+    "backend": "undefined",
+    "train": {
+      "epochs": 1,
+      "batchSize": 1
+    }
+  }
+}

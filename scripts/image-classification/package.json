@@ -23,10 +23,12 @@
     "pipcook-downloader": "^8.0.0"
   },
   "devDependencies": {
+    "@pipcook/cli": "^2.1.4",
     "@types/fs-extra": "^9.0.7",
     "@types/jasmine": "^3.5.7",
     "nyc": "14.1.1",
     "ts-loader": "^9.0.2",
+    "ts-node": "^10.2.1",
     "typescript": "^4.2.4",
     "webpack": "^5.24.3",
     "webpack-cli": "^4.5.0",

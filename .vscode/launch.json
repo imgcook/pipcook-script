@@ -1,0 +1,81 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "debug object detection yolo",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}/scripts/object-detection-yolo",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "./node_modules/.bin/pipcook",
+        "train",
+        "./debug/pipeline.json",
+        "--output", "./debug/workspace",
+        "--dev",
+        "-d"
+      ]
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "debug image classification mobilenet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}/scripts/image-classification",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "./node_modules/.bin/pipcook",
+        "train",
+        "./debug/pipeline-mobilenet.json",
+        "--output", "./debug/workspace",
+        "--dev",
+        "-d"
+      ]
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "debug image classification resnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}/scripts/image-classification",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "./node_modules/.bin/pipcook",
+        "train",
+        "./debug/pipeline-resnet.json",
+        "--output", "./debug/workspace",
+        "--dev",
+        "-d"
+      ]
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "debug text classification bayes",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}/scripts/text-classification-bayes",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "./node_modules/.bin/pipcook",
+        "train",
+        "./debug/pipeline.json",
+        "--output", "./debug/workspace",
+        "--dev",
+        "-d"
+      ]
+    }
+  ]
+}

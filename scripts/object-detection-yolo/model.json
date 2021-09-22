@@ -1,0 +1,1 @@
+{"modelTopology":{"class_name":"Sequential","config":{"name":"sequential_1","layers":[]},"keras_version":"tfjs-layers 3.9.0","backend":"tensor_flow.js"},"weightsManifest":[{"paths":["weights.bin"],"weights":[]}],"format":"layers-model","generatedBy":"TensorFlow.js tfjs-layers v3.9.0","convertedBy":null}
