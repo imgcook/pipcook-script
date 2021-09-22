@@ -8,7 +8,7 @@
   "model": "./src/model.ts?modelUrl=resnet",
   "options": {
     "framework": "tfjs@3.8",
-    "backend": "@tensorflow/tfjs",
+    "backend": null,
     "train": {
       "epochs": 1
     }

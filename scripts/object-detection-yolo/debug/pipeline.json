@@ -6,7 +6,7 @@
   "artifact": [],
   "options": {
     "framework": "tfjs@3.8",
-    "backend": "undefined",
+    "backend": null,
     "train": {
       "epochs": 1,
       "batchSize": 1
