@@ -12,17 +12,8 @@ let vectorizer;
 
 load();
 
-const textProcessing = (row_data, mode='cn') => {
-  let words_list = [];
-  row_data.forEach((data, i) => {
-    if (mode == 'cn'){
-      const word_cut = cut(data);
-      words_list.push(word_cut);
-    } else {
-      words_list.push(data)
-    }
-  });
-  return words_list
+const textProcessing = (rowData, mode = 'cn') => {
+  return mode === 'cn' ? rowData.map((data) => cut(data)) : rowData;
 }
 
 const train = async (runtime, options, context) => {
@@ -71,32 +62,27 @@ const modelLoad = async (context) => {
   return [ classifier, vectorizer ];
 };
 
-const predict = async (runtime, options, context) => {
+const predict = async (runtime, _, context) => {
   if (!classifier || !vectorizer) {
     [ classifier, vectorizer ] = await modelLoad(context);
   }
   // access predict samples
-  const predictData = [];
   const predictSamples = await runtime.dataset.predicted.nextBatch(-1);
-  predictSamples.forEach((d) => {
-    predictData.push(d.data);
-  });
+  const predictData = predictSamples.map((d) => d.data);
   // process text dataset
   const predictWordsList = textProcessing(predictData);
   const predictVector = vectorizer.transform(predictWordsList);
   const predClasses = classifier.predict(predictVector).dataSync();
-  const predIds = predClasses.map((predClass) => classifier.classMap[predClass])
+  const predIds = predClasses.map((predClass) => classifier.classMap[predClass]);
   const predProbs = classifier.predictProba(predictVector).arraySync();
-  const predictResult = predClasses.map((predClass, i)=>{
-    const res = {id: predIds[i], category: predClass, score: predProbs[i][predIds[i]]}
-    return res
-  })
-  console.log(predictResult);
-  return predictResult
+  return predClasses.map((predClass, i) => ({
+    id: predIds[i],
+    category: predClass,
+    score: predProbs[i][predIds[i]]
+  }));
 }
 
 module.exports = {
   train,
   predict
-}
-
+};

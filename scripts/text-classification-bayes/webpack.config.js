@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
   target: "node",
   entry: {
-    datasource: ["./src/datasource.ts"],
+    datasource: ["./src/datasource.js"],
     model: ["./src/model.js"]
   },
   module: {
