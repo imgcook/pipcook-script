@@ -1,21 +1,16 @@
 /**
  * @file For plugin to collect test classification data
  */
-import * as path from 'path';
-import * as fs from 'fs-extra';
-import glob from 'glob-promise';
-// @ts-ignore
-import download from 'pipcook-downloader';
-import { ScriptContext, DatasourceEntry, DatasetPool, DataCook } from '@pipcook/core';
-
-type Sample = DataCook.Dataset.Types.Sample<string, string>;
-type ScriptDatasetPool = DatasetPool.Types.DatasetPool<Sample, DatasetPool.Types.ClassificationDatasetMeta>;
-type Entry = DatasourceEntry<Sample, DatasetPool.Types.ClassificationDatasetMeta>;
+const path = require('path');
+const fs = require('fs-extra');
+const glob = require('glob-promise');
+const download = require('pipcook-downloader');
+const { DatasetPool } = require('@pipcook/core');
 
 /**
  * collect csv data
  */
-const textClassDataCollect: Entry = async (option: Record<string, any>, context: ScriptContext): Promise<ScriptDatasetPool> => {
+const textClassDataCollect = async (option, context) => {
   const {
     url = ''
   } = option;
@@ -27,9 +22,9 @@ const textClassDataCollect: Entry = async (option: Record<string, any>, context:
     extract: true
   });
   const csvPaths = await glob(path.join(dataDir, '**', '+(train|validation|test)', '*.csv'));
-  let trainData: string;
-  let testData: string;
-  let validData: string;
+  let trainData;
+  let testData;
+  let validData;
   for (let i = 0; i < csvPaths.length; i++) {
     const csvPath = csvPaths[i];
     const trainType = path.basename(path.dirname(csvPath));
@@ -50,16 +45,16 @@ const textClassDataCollect: Entry = async (option: Record<string, any>, context:
     hasHeader: true,
     labels: [ 'output' ]
   });
-  const categories = (await datasetPool.train?.nextBatch(-1))?.map((sample) => sample.label['output']);
-  await datasetPool.train?.seek(0);
+  const categories = (await datasetPool.train.nextBatch(-1)).map((sample) => sample.label['output']);
+  await datasetPool.train.seek(0);
   return datasetPool.transform({
-    transform: async (sample: DataCook.Dataset.Types.Csv.Sample): Promise<Sample> => {
+    transform: async (sample) => {
       return {
         data: sample.data['﻿input'],
         label: sample.label['output']
       };
     },
-    metadata: async (meta?: DatasetPool.Types.Csv.DatasetMeta): Promise<DatasetPool.Types.ClassificationDatasetMeta> => {
+    metadata: async (meta) => {
       return {
         ...meta,
         categories
@@ -68,4 +63,4 @@ const textClassDataCollect: Entry = async (option: Record<string, any>, context:
   });
 };
 
-export default textClassDataCollect;
+module.exports = textClassDataCollect;

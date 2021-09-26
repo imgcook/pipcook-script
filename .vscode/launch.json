@@ -67,8 +67,6 @@
       ],
       "cwd": "${workspaceRoot}/scripts/text-classification-bayes",
       "runtimeArgs": [
-        "-r",
-        "ts-node/register",
         "./node_modules/.bin/pipcook",
         "train",
         "./debug/pipeline.json",
