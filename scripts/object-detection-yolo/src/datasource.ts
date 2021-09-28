@@ -53,7 +53,9 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
   } else {
     const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
     const extention = fileName.split('.');
-    assert.ok(extention[extention.length - 1] === 'zip', 'The dataset provided should be a zip file');
+    const supports = ['zip', 'gz', 'bz2'];
+    assert.ok(supports.indexOf(extention[extention.length - 1]) !== -1, `The dataset provided should be a ${supports.join(',')} file`);
+
     console.log('downloading dataset ...');
     await download(url, dataDir, {
       extract: true
