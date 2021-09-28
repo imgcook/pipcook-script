@@ -3,14 +3,14 @@
  * the data is conform to expectation.
  */
 
- import { DataCook, DatasourceEntry, DatasetPool } from '@pipcook/core';
- // @ts-ignore
- import download from 'pipcook-downloader';
- import * as fs from 'fs-extra';
- import path from 'path';
- import glob from 'glob-promise';
- import * as assert from 'assert';
- import * as XMLParser from 'fast-xml-parser';
+import { DataCook, DatasourceEntry, DatasetPool } from '@pipcook/core';
+// @ts-ignore
+import download from 'pipcook-downloader';
+import * as fs from 'fs-extra';
+import path from 'path';
+import glob from 'glob-promise';
+import * as assert from 'assert';
+import * as XMLParser from 'fast-xml-parser';
 
 function processCoco(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
   data?.images.forEach(image => {
