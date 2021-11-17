@@ -6,6 +6,7 @@
 import { DatasourceEntry, DataCook, DatasetPool } from '@pipcook/core';
 // @ts-ignore
 import download from 'pipcook-downloader';
+import decompress from 'decompress';
 import * as fs from 'fs-extra';
 import path from 'path';
 import glob from 'glob-promise';
@@ -49,8 +50,13 @@ const imageClassDataCollect: DatasourceEntry<DataCook.Dataset.Types.ImageClassif
   let targetPath: string;
   if (/^file:\/\/.*/.test(url)) {
     targetPath = url.substring(7);
+    let decompressPath: string = targetPath;
+    if (extention[extention.length - 1] === 'zip') {
+      decompressPath = targetPath.split('.zip')[0];
+      await decompress(targetPath, decompressPath);
+    }
     await fs.remove(dataDir);
-    await fs.symlink(targetPath, dataDir);
+    await fs.symlink(decompressPath, dataDir);
   } else {
     assert.ok(extention[extention.length - 1] === 'zip', 'The dataset provided should be a zip file');
     console.log('downloading dataset ...');

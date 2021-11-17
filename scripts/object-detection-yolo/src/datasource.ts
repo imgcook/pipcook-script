@@ -6,6 +6,7 @@
 import { DataCook, DatasourceEntry, DatasetPool } from '@pipcook/core';
 // @ts-ignore
 import download from 'pipcook-downloader';
+import decompress from 'decompress';
 import * as fs from 'fs-extra';
 import path from 'path';
 import glob from 'glob-promise';
@@ -46,13 +47,20 @@ const objectDetectionDataSourceFromCoco: DatasourceEntry<
 
   assert.ok(url, 'Please specify the url of your dataset');
 
+  const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
+  const extention = fileName.split('.');
+
   let targetPath: string;
   if (/^file:\/\/.*/.test(url)) {
     targetPath = url.substring(7);
-    await fs.copy(targetPath, dataDir);
+    let decompressPath: string = targetPath;
+    if (extention[extention.length - 1] === 'zip') {
+      decompressPath = targetPath.split('.zip')[0];
+      await decompress(targetPath, decompressPath);
+    }
+    await fs.remove(dataDir);
+    await fs.symlink(decompressPath, dataDir);
   } else {
-    const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
-    const extention = fileName.split('.');
     const supports = ['zip', 'gz', 'bz2'];
     assert.ok(supports.indexOf(extention[extention.length - 1]) !== -1, `The dataset provided should be a ${supports.join(',')} file`);
 
@@ -112,13 +120,20 @@ const objectDetectionDataSourceFromPascalVoc: DatasourceEntry<
 
   assert.ok(url, 'Please specify the url of your dataset');
 
+  const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
+  const extention = fileName.split('.');
+
   let targetPath: string;
   if (/^file:\/\/.*/.test(url)) {
     targetPath = url.substring(7);
-    await fs.copy(targetPath, dataDir);
+    let decompressPath: string = targetPath;
+    if (extention[extention.length - 1] === 'zip') {
+      decompressPath = targetPath.split('.zip')[0];
+      await decompress(targetPath, decompressPath);
+    }
+    await fs.remove(dataDir);
+    await fs.symlink(decompressPath, dataDir);
   } else {
-    const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
-    const extention = fileName.split('.');
     assert.ok(extention[extention.length - 1] === 'zip', 'The dataset provided should be a zip file');
     console.log('downloading dataset ...');
     await download(url, dataDir, {

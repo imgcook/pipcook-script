@@ -5,6 +5,8 @@ const path = require('path');
 const fs = require('fs-extra');
 const glob = require('glob-promise');
 const download = require('pipcook-downloader');
+const decompress = require('decompress');
+const assert = require('assert');
 const { DatasetPool } = require('@pipcook/core');
 
 /**
@@ -18,9 +20,30 @@ const textClassDataCollect = async (option, context) => {
   await fs.remove(dataDir);
   await fs.ensureDir(dataDir);
 
-  await download(url, dataDir, {
-    extract: true
-  });
+  assert.ok(url, 'Please specify the url of your dataset');
+
+  const fileName = url.split(path.sep)[url.split(path.sep).length - 1];
+  const extention = fileName.split('.');
+
+  let targetPath;
+  if (/^file:\/\/.*/.test(url)) {
+    targetPath = url.substring(7);
+    let decompressPath = targetPath;
+    if (extention[extention.length - 1] === 'zip') {
+      decompressPath = targetPath.split('.zip')[0];
+      await decompress(targetPath, decompressPath);
+    }
+    await fs.remove(dataDir);
+    await fs.symlink(decompressPath, dataDir);
+  } else {
+    assert.ok(extention[extention.length - 1] === 'zip', 'The dataset provided should be a zip file');
+    console.log('downloading dataset ...');
+    await download(url, dataDir, {
+      extract: true
+    });
+  }
+
+  console.log('unzip and collecting data...');
   const csvPaths = await glob(path.join(dataDir, '**', '+(train|validation|test)', '*.csv'));
   let trainData;
   let testData;
