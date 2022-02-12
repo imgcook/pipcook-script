@@ -1,7 +1,7 @@
 {
   "specVersion": "2.0",
   "type": "TextClassification",
-  "datasource": "./src/datasource.js?url=http://ai-sample.oss-cn-hangzhou.aliyuncs.com/image_classification/datasets/textClassification.zip",
+  "datasource": "./src/datasource.js?url=https://pipcook-cloud.oss-cn-hangzhou.aliyuncs.com/dataset/text-classification.zip",
   "model": "./src/model.js",
   "options": {
     "framework": "tfjs@3.8-nlp",
