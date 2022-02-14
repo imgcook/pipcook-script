@@ -72,7 +72,7 @@ const textClassDataCollect = async (option, context) => {
   await datasetPool.train.seek(0);
   return datasetPool.transform({
     transform: async (sample) => {
-      if (!sample.data || sample.data['input'] || !sample.label || sample.label['output']) {
+      if (!sample.data || !sample.data['input'] || !sample.label || !sample.label['output']) {
         throw new TypeError(`invalid sample: ${JSON.stringify(sample)}`);
       }
       return { data: sample.data['input'], label: sample.label['output'] };
