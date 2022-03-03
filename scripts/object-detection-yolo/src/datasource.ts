@@ -22,10 +22,11 @@ function processCoco(data: DataCook.Dataset.Types.Coco.Meta, curPath: string) {
 }
 
 function processPascalVoc(data: DataCook.Dataset.Types.PascalVoc.Annotation[], imageFiles: string[], datasetPath: string) {
+  const resolvedFiles = imageFiles.map(file => path.resolve(file));
   data.forEach(ann => {
     const imgPath = path.join(datasetPath, ann.annotation.path || path.join(ann.annotation.folder, ann.annotation.filename));
-    if (imageFiles.indexOf(imgPath) < 0) {
-      throw new TypeError(`image ${ann.annotation.filename || ann.annotation.path} is not found.`);
+    if (resolvedFiles.indexOf(imgPath) < 0) {
+      throw new TypeError(`image ${ann.annotation.path || ann.annotation.filename} is not found.`);
     }
     ann.annotation.path = imgPath;
   });
@@ -149,8 +150,7 @@ const objectDetectionDataSourceFromPascalVoc: DatasourceEntry<
   let valid: DataCook.Dataset.Types.PascalVoc.Annotation[] = [];
 
   for (const annotationPath of annotationPaths) {
-    const splitString = annotationPath.split(path.sep);
-    const trainType = splitString[splitString.length - 2];
+    const trainType = path.basename(path.dirname(annotationPath));
     if (trainType === 'train') {
       train.push(XMLParser.parse((await fs.readFile(annotationPath)).toString()));
     } else if (trainType === 'test') {
