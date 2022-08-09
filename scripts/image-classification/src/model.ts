@@ -5,8 +5,8 @@ import { TransedSample, TransedMetadata } from './types';
 import * as tf from '@tensorflow/tfjs-node';
 
 const defaultWeightsMap: {[key: string]: string} = {
-  'resnet': 'https://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/resnet50_tfjs/model.json',
-  'mobilenet': 'http://ai-sample.oss-cn-hangzhou.aliyuncs.com/pipcook/models/mobilenet/web_model/model.json'
+  'resnet': 'https://pipcook-cloud.oss-cn-hangzhou.aliyuncs.com/pipcook-model/resnet50_tfjs/model.json',
+  'mobilenet': 'https://pipcook-cloud.oss-cn-hangzhou.aliyuncs.com/pipcook-model/mobilenet_tfjs/model.json'
 }
 
 /**
