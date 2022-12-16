@@ -36,7 +36,7 @@ const train = async (runtime, options, context) => {
   vectorizer.initDict(trainWordsList, stopWords);
   const trainVector = vectorizer.transform(trainWordsList);
   // train model
-  await classifier.train(trainVector, trainClass);
+  await classifier.fit(trainVector, trainClass);
   // predict
   const predClass = classifier.predict(trainVector);
   const acc = accuracyScore(trainClass, predClass);
